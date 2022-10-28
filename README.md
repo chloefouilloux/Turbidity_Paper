@@ -15,7 +15,7 @@ Data and Data Wrangling for Turbidity Paper
 
 ## Data ##
 
-**LAS_VISION_OCT2022 is the raw data from La Selva, Costa Rica**
+### **LAS_VISION_OCT2022 is the raw data from La Selva, Costa Rica** ###
 
 *Trial* is the trial number (includes all permutations)
 
@@ -53,7 +53,7 @@ Data and Data Wrangling for Turbidity Paper
 
 *rMean_OG* (b, g) are the mean red, blue, or green channel percent reflectance from photographs.
 
-**FG_TURB_OCT2022 is the raw data from Les Nouragues (Parare), French Guiana**
+### **FG_TURB_OCT2022 is the raw data from Les Nouragues (Parare), French Guiana** ###
 
 *Tad_ID* individual ID given to each tadpole
 
