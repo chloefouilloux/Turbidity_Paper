@@ -1,6 +1,7 @@
 # Turbidity_Paper
 Data and Data Wrangling for Turbidity Paper
 
+Hello! This is the raw data and code for the Fouilloux et al. (2023) paper exploring the effect of nursery turbidity on the (visual) perception of risk for tadpoles that develop in epehemeral pools of water, called phytotelmata. I did not upload the spectral data because the files are so large, but am happy to send them your way upon request.
 
 
 ## Code ##
