@@ -17,9 +17,9 @@ water_spectra are the spectrophotometry measurements/analysis from nursery water
 
 LAS_VISION_OCT2022 is the raw data from La Selva, Costa Rica
 
-*Trial* is the trial number (includes all permutations)
-*Mean_Wave* is the average spectrophotometry wavelength intensity across three samples of water collected in nurseries.
-*Range_Wave* is the range of spectrophotometry wavelength intensity within water samples of water collected in nurseries.
+> *Trial* is the trial number (includes all permutations)
+> *Mean_Wave* is the average spectrophotometry wavelength intensity across three samples of water collected in nurseries.
+> *Range_Wave* is the range of spectrophotometry wavelength intensity within water samples of water collected in nurseries.
 *Tad_ID* individual ID given to each tadpole
 *Mass* is the mass of tadpoles in grams.
 *Stage* is the Gosner (1961) stage to assess tadpole deveopment
