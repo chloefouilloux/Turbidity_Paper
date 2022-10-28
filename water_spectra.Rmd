@@ -1,0 +1,862 @@
+---
+title: "spec analysis"
+author: "Chloe Fouilloux"
+date: '2022-08-08'
+output: html_document
+---
+
+```{r Load Packages}
+#Giving up and having .csv files instead
+library(ggplot2)
+library(dplyr)
+library(gghighlight)
+library(hyperSpec)
+library(RColorBrewer)
+
+#Theme Set----
+theme_set(  theme(legend.position = "right",
+                  strip.background = element_rect(fill = "White"),
+                  panel.background = element_rect(fill = "white",
+                                                  colour = "black"), 
+                  panel.grid.major = element_line(size = 0), 
+                  panel.grid.minor = element_line(size = 0), 
+                  text = element_text(size = 14)))
+```
+
+Alright, let's try with one pool and all of its replicates
+
+```{r}
+
+#POOL 001, ONLY ONE REPLICATE AS IT WAS USED FOR TRANIING
+las1a<- read.csv("las-001-a-DataSet1.csv", header = F)
+las1a$replicate<- "a"
+las1b<- read.csv("las-001-b-DataSet1.csv", header = F)
+las1b$replicate<- "b"
+las1c<- read.csv("las-001-diluted5-DataSet1.csv", header = F)
+las1c$replicate<- "c"
+
+las001<- las1c
+
+las001_cut<- las001 %>%
+             filter(V2 < 1) %>% #V2 = spc
+             filter(V1 > 400) %>%
+             mutate(
+               wavelength = V1, 
+               intensity = V2,
+               ave = mean(V2), 
+               Pool_ID = "001")
+#POOL 002
+las2a<- read.csv("las-002-a-DataSet1.csv", header = F)
+las2a$replicate<- "a"
+las2b<- read.csv("las-002-b-DataSet1.csv", header = F)
+las2b$replicate<- "b"
+
+las002<- rbind(las2a, las2b)
+
+las002_cut<- las002 %>%
+             filter(V2 < 1) %>% #V2 = spc
+             filter(V1 > 400) %>%
+             mutate(
+               wavelength = V1,
+               intensity = V2,
+               ave = mean(V2), 
+               Pool_ID = "002")
+
+#POOL 003
+las3a<- read.csv("las-003-a-DataSet1.csv", header = F)
+las3a$replicate<- "a"
+las3b<- read.csv("las-003-b-DataSet1.csv", header = F)
+las3b$replicate<- "b"
+las3c<- read.csv("las-003-c-DataSet1.csv", header = F)
+las3c$replicate<- "c"
+
+las003<- rbind(las3a, las3b, las3c)
+
+#alright, so we know that we only want an intensity below one, and visible spetra are 
+#from 400-750nm¨
+
+las003_cut<- las003 %>%
+             filter(V2 < 1) %>% #V2 = spc
+             filter(V1 > 400) %>%
+             mutate(
+               wavelength = V1,
+               intensity = V2,
+               ave = mean(V2),
+               Pool_ID = "003")
+
+#POOL 004
+las4a<- read.csv("las-004-a-DataSet1.csv", header = F)
+las4a$replicate<- "a"
+las4b<- read.csv("las-004-b-DataSet1.csv", header = F)
+las4b$replicate<- "b"
+las4c<- read.csv("las-004-c-DataSet1.csv", header = F)
+las4c$replicate<- "c"
+
+las004<- rbind(las4a, las4b, las4c)
+
+#alright, so we know that we only want an intensity below one, and visible spetra are 
+#from 400-750nm¨
+
+las004_cut<- las004 %>%
+             filter(V2 < 1) %>% #V2 = spc
+             filter(V1 > 400) %>%
+             mutate(
+               wavelength = V1,
+               intensity = V2,
+               ave = mean(V2),
+               Pool_ID = "004")
+
+#POOL 005
+las5a<- read.csv("las-005-a-DataSet1.csv", header = F)
+las5a$replicate<- "a"
+las5b<- read.csv("las-005-b-DataSet1.csv", header = F)
+las5b$replicate<- "b"
+las5c<- read.csv("las-005-c-DataSet1.csv", header = F)
+las5c$replicate<- "c"
+
+las005<- rbind(las5a, las5b, las5c)
+
+#alright, so we know that we only want an intensity below one, and visible spetra are 
+#from 400-750nm¨
+
+las005_cut<- las005 %>%
+             filter(V2 < 1) %>% #V2 = spc
+             filter(V1 > 400) %>%
+             mutate(
+               wavelength = V1,
+               intensity = V2,
+               ave = mean(V2),
+               Pool_ID = "005")
+
+#POOL 006
+las6a<- read.csv("las-006-a-DataSet1.csv", header = F)
+las6a$replicate<- "a"
+las6b<- read.csv("las-006-b-DataSet1.csv", header = F)
+las6b$replicate<- "b"
+las6c<- read.csv("las-006-c-DataSet1.csv", header = F)
+las6c$replicate<- "c"
+
+las006<- rbind(las6a, las6b, las6c)
+
+#alright, so we know that we only want an intensity below one, and visible spetra are 
+#from 400-750nm¨
+
+las006_cut<- las006 %>%
+             filter(V2 < 1) %>% #V2 = spc
+             filter(V1 > 400) %>%
+             mutate(
+               wavelength = V1,
+               intensity = V2,
+               ave = mean(V2),
+               Pool_ID = "006")
+
+#POOL 007
+las7a<- read.csv("las-007-a-DataSet1.csv", header = F)
+las7a$replicate<- "a"
+las7b<- read.csv("las-007-b-DataSet1.csv", header = F)
+las7b$replicate<- "b"
+las7c<- read.csv("las-007-c-DataSet1.csv", header = F)
+las7c$replicate<- "c"
+
+las007<- rbind(las7a, las7b, las7c)
+
+#alright, so we know that we only want an intensity below one, and visible spetra are 
+#from 400-750nm¨
+
+las007_cut<- las007 %>%
+             filter(V2 < 1) %>% #V2 = spc
+             filter(V1 > 400) %>%
+             mutate(
+               wavelength = V1,
+               intensity = V2,
+               ave = mean(V2),
+               Pool_ID = "007")
+
+#POOL 008
+las8a<- read.csv("las-008-a-DataSet1.csv", header = F)
+las8a$replicate<- "a"
+las8b<- read.csv("las-008-b-DataSet1.csv", header = F)
+las8b$replicate<- "b"
+las8c<- read.csv("las-008-c-DataSet1.csv", header = F)
+las8c$replicate<- "c"
+
+las008<- rbind(las8a, las8b, las8c)
+
+#alright, so we know that we only want an intensity below one, and visible spetra are 
+#from 400-750nm¨
+
+las008_cut<- las008 %>%
+             filter(V2 < 1) %>% #V2 = spc
+             filter(V1 > 400) %>%
+             mutate(
+               wavelength = V1,
+               intensity = V2,
+               ave = mean(V2),
+               Pool_ID = "008")
+
+#POOL 009
+las9a<- read.csv("las-009-a-DataSet1.csv", header = F)
+las9a$replicate<- "a"
+las9b<- read.csv("las-009-b-DataSet1.csv", header = F)
+las9b$replicate<- "b"
+las9c<- read.csv("las-009-c-DataSet1.csv", header = F)
+las9c$replicate<- "c"
+
+las009<- rbind(las9a, las9b, las9c)
+
+#alright, so we know that we only want an intensity below one, and visible spetra are 
+#from 400-750nm¨
+
+las009_cut<- las009 %>%
+             filter(V2 < 1) %>% #V2 = spc
+             filter(V1 > 400) %>%
+             mutate(
+               wavelength = V1,
+               intensity = V2,
+               ave = mean(V2),
+               Pool_ID = "009")
+
+#POOL 010
+las10a<- read.csv("las-010-a-DataSet1.csv", header = F)
+las10a$replicate<- "a"
+las10b<- read.csv("las-010-b-DataSet1.csv", header = F)
+las10b$replicate<- "b"
+las10c<- read.csv("las-010-c-DataSet1.csv", header = F)
+las10c$replicate<- "c"
+
+las010<- rbind(las10a, las10b, las10c)
+
+#alright, so we know that we only want an intensity below one, and visible spetra are 
+#from 400-750nm¨
+
+las010_cut<- las010 %>%
+             filter(V2 < 1) %>% #V2 = spc
+             filter(V1 > 400) %>%
+             mutate(
+               wavelength = V1,
+               intensity = V2,
+               ave = mean(V2),
+               Pool_ID = "010")
+
+#POOL 011
+las11a<- read.csv("las-011-a-DataSet1.csv", header = F)
+las11a$replicate<- "a"
+las11b<- read.csv("las-011-b-DataSet1.csv", header = F)
+las11b$replicate<- "b"
+las11c<- read.csv("las-011-c-DataSet1.csv", header = F)
+las11c$replicate<- "c"
+
+las011<- rbind(las11a, las11b, las11c)
+
+#alright, so we know that we only want an intensity below one, and visible spetra are 
+#from 400-750nm¨
+
+las011_cut<- las011 %>%
+             filter(V2 < 1) %>% #V2 = spc
+             filter(V1 > 400) %>%
+             mutate(
+               wavelength = V1,
+               intensity = V2,
+               ave = mean(V2),
+               Pool_ID = "011")
+
+#POOL 012
+las12a<- read.csv("las-012-a-DataSet1.csv", header = F)
+las12a$replicate<- "a"
+las12b<- read.csv("las-012-b-DataSet1.csv", header = F)
+las12b$replicate<- "b"
+las12c<- read.csv("las-012-c-DataSet1.csv", header = F)
+las12c$replicate<- "c"
+
+las012<- rbind(las12a, las12b, las12c)
+
+#alright, so we know that we only want an intensity below one, and visible spetra are 
+#from 400-750nm¨
+
+las012_cut<- las012 %>%
+             filter(V2 < 1) %>% #V2 = spc
+             filter(V1 > 400) %>%
+             mutate(
+               wavelength = V1,
+               intensity = V2,
+               ave = mean(V2),
+               Pool_ID = "012")
+
+#POOL 013
+las13a<- read.csv("las-013-a-DataSet1.csv", header = F)
+las13a$replicate<- "a"
+las13b<- read.csv("las-013-b-DataSet1.csv", header = F)
+las13b$replicate<- "b"
+las13c<- read.csv("las-013-c-DataSet1.csv", header = F)
+las13c$replicate<- "c"
+
+las013<- rbind(las13a, las13b, las13c)
+
+#alright, so we know that we only want an intensity below one, and visible spetra are 
+#from 400-750nm¨
+
+las013_cut<- las013 %>%
+             filter(V2 < 1) %>% #V2 = spc
+             filter(V1 > 400) %>%
+             mutate(
+               wavelength = V1,
+               intensity = V2,
+               ave = mean(V2),
+               Pool_ID = "013")
+
+#POOL 014
+las14a<- read.csv("las-014-a-DataSet1.csv", header = F)
+las14a$replicate<- "a"
+las14b<- read.csv("las-014-b-DataSet1.csv", header = F)
+las14b$replicate<- "b"
+las14c<- read.csv("las-014-c-DataSet1.csv", header = F)
+las14c$replicate<- "c"
+
+las014<- rbind(las14a, las14b, las14c)
+
+#alright, so we know that we only want an intensity below one, and visible spetra are 
+#from 400-750nm¨
+
+las014_cut<- las014 %>%
+             filter(V2 < 1) %>% #V2 = spc
+             filter(V1 > 400) %>%
+             mutate(
+               wavelength = V1,
+               intensity = V2,
+               ave = mean(V2),
+               Pool_ID = "014")
+
+#POOL 015
+las15a<- read.csv("las-015-a-DataSet1.csv", header = F)
+las15a$replicate<- "a"
+las15b<- read.csv("las-015-b-DataSet1.csv", header = F)
+las15b$replicate<- "b"
+las15c<- read.csv("las-015-c-DataSet1.csv", header = F)
+las15c$replicate<- "c"
+
+las015<- rbind(las15a, las15b, las15c)
+
+#alright, so we know that we only want an intensity below one, and visible spetra are 
+#from 400-750nm¨
+
+las015_cut<- las015 %>%
+             filter(V2 < 1) %>% #V2 = spc
+             filter(V1 > 400) %>%
+             mutate(
+               wavelength = V1,
+               intensity = V2,
+               ave = mean(V2),
+               Pool_ID = "015")
+
+#POOL 016
+las16a<- read.csv("las-016-a-DataSet1.csv", header = F)
+las16a$replicate<- "a"
+las16b<- read.csv("las-016-b-DataSet1.csv", header = F)
+las16b$replicate<- "b"
+las16c<- read.csv("las-016-c-DataSet1.csv", header = F)
+las16c$replicate<- "c"
+
+las016<- rbind(las16a, las16b, las16c)
+
+#alright, so we know that we only want an intensity below one, and visible spetra are 
+#from 400-750nm¨
+
+las016_cut<- las016 %>%
+             filter(V2 < 1) %>% #V2 = spc
+             filter(V1 > 400) %>%
+             mutate(
+               wavelength = V1,
+               intensity = V2,
+               ave = mean(V2),
+               Pool_ID = "016")
+
+#POOL 017
+las17a<- read.csv("las-017-a-DataSet1.csv", header = F)
+las17a$replicate<- "a"
+las17b<- read.csv("las-017-b-DataSet1.csv", header = F)
+las17b$replicate<- "b"
+las17c<- read.csv("las-017-c-DataSet1.csv", header = F)
+las17c$replicate<- "c"
+
+las017<- rbind(las17a, las17b, las17c)
+
+#alright, so we know that we only want an intensity below one, and visible spetra are 
+#from 400-750nm¨
+
+las017_cut<- las017 %>%
+             filter(V2 < 1) %>% #V2 = spc
+             filter(V1 > 400) %>%
+             mutate(
+               wavelength = V1,
+               intensity = V2,
+               ave = mean(V2),
+               Pool_ID = "017")
+
+#POOL 018
+las18a<- read.csv("las-018-a-DataSet1.csv", header = F)
+las18a$replicate<- "a"
+las18b<- read.csv("las-018-b-DataSet1.csv", header = F)
+las18b$replicate<- "b"
+las18c<- read.csv("las-018-c-DataSet1.csv", header = F)
+las18c$replicate<- "c"
+
+las018<- rbind(las18a, las18b, las18c)
+
+#alright, so we know that we only want an intensity below one, and visible spetra are 
+#from 400-750nm¨
+
+las018_cut<- las018 %>%
+             filter(V2 < 1) %>% #V2 = spc
+             filter(V1 > 400) %>%
+             mutate(
+               wavelength = V1,
+               intensity = V2,
+               ave = mean(V2),
+               Pool_ID = "018")
+
+#POOL 019
+las19a<- read.csv("las-019-a-DataSet1.csv", header = F)
+las19a$replicate<- "a"
+las19b<- read.csv("las-019-b-DataSet1.csv", header = F)
+las19b$replicate<- "b"
+las19c<- read.csv("las-019-c-DataSet1.csv", header = F)
+las19c$replicate<- "c"
+
+las019<- rbind(las19a, las19b, las19c)
+
+#alright, so we know that we only want an intensity below one, and visible spetra are 
+#from 400-750nm¨
+
+las019_cut<- las019 %>%
+             filter(V2 < 1) %>% #V2 = spc
+             filter(V1 > 400) %>%
+             mutate(
+               wavelength = V1,
+               intensity = V2,
+               ave = mean(V2),
+               Pool_ID = "019")
+
+#POOL 020
+las20a<- read.csv("las-020-a-DataSet1.csv", header = F)
+las20a$replicate<- "a"
+las20b<- read.csv("las-020-b-DataSet1.csv", header = F)
+las20b$replicate<- "b"
+las20c<- read.csv("las-020-c-DataSet1.csv", header = F)
+las20c$replicate<- "c"
+
+las020<- rbind(las20a, las20b, las20c)
+
+#alright, so we know that we only want an intensity below one, and visible spetra are 
+#from 400-750nm¨
+
+las020_cut<- las020 %>%
+             filter(V2 < 1) %>% #V2 = spc
+             filter(V1 > 400) %>%
+             mutate(
+               wavelength = V1,
+               intensity = V2,
+               ave = mean(V2),
+               Pool_ID = "020")
+
+#POOL 020
+las20a<- read.csv("las-020-a-DataSet1.csv", header = F)
+las20a$replicate<- "a"
+las20b<- read.csv("las-020-b-DataSet1.csv", header = F)
+las20b$replicate<- "b"
+las20c<- read.csv("las-020-c-DataSet1.csv", header = F)
+las20c$replicate<- "c"
+
+las020<- rbind(las20a, las20b, las20c)
+
+#alright, so we know that we only want an intensity below one, and visible spetra are 
+#from 400-750nm¨
+
+las020_cut<- las020 %>%
+             filter(V2 < 1) %>% #V2 = spc
+             filter(V1 > 400) %>%
+             mutate(
+               wavelength = V1,
+               intensity = V2,
+               ave = mean(V2),
+               Pool_ID = "020")
+
+#POOL 021
+las21a<- read.csv("las-021-a-DataSet1.csv", header = F)
+las21a$replicate<- "a"
+las21b<- read.csv("las-021-b-DataSet1.csv", header = F)
+las21b$replicate<- "b"
+las21c<- read.csv("las-021-c-DataSet1.csv", header = F)
+las21c$replicate<- "c"
+
+las021<- rbind(las21a, las21b, las21c)
+
+#alright, so we know that we only want an intensity below one, and visible spetra are 
+#from 400-750nm¨
+
+las021_cut<- las021 %>%
+             filter(V2 < 1) %>% #V2 = spc
+             filter(V1 > 400) %>%
+             mutate(
+               wavelength = V1,
+               intensity = V2,
+               ave = mean(V2),
+               Pool_ID = "021")
+
+#POOL 022
+las22a<- read.csv("las-022-a-DataSet1.csv", header = F)
+las22a$replicate<- "a"
+las22b<- read.csv("las-022-b-DataSet1.csv", header = F)
+las22b$replicate<- "b"
+las22c<- read.csv("las-022-c-DataSet1.csv", header = F)
+las22c$replicate<- "c"
+
+las022<- rbind(las22a, las22b, las22c)
+
+#alright, so we know that we only want an intensity below one, and visible spetra are 
+#from 400-750nm¨
+
+las022_cut<- las022 %>%
+             filter(V2 < 1) %>% #V2 = spc
+             filter(V1 > 400) %>%
+             mutate(
+               wavelength = V1,
+               intensity = V2,
+               ave = mean(V2),
+               Pool_ID = "022")
+
+#POOL 023
+las23a<- read.csv("las-023-a-DataSet1.csv", header = F)
+las23a$replicate<- "a"
+las23b<- read.csv("las-023-b-DataSet1.csv", header = F)
+las23b$replicate<- "b"
+las23c<- read.csv("las-023-c-DataSet1.csv", header = F)
+las23c$replicate<- "c"
+
+las023<- rbind(las23a, las23b, las23c)
+
+#alright, so we know that we only want an intensity below one, and visible spetra are 
+#from 400-750nm¨
+
+las023_cut<- las023 %>%
+             filter(V2 < 1) %>% #V2 = spc
+             filter(V1 > 400) %>%
+             mutate(
+               wavelength = V1,
+               intensity = V2,
+               ave = mean(V2),
+               Pool_ID = "023")
+
+#POOL 024
+las24a<- read.csv("las-024-a-DataSet1.csv", header = F)
+las24a$replicate<- "a"
+las24b<- read.csv("las-024-b-DataSet1.csv", header = F)
+las24b$replicate<- "b"
+las24c<- read.csv("las-024-c-DataSet1.csv", header = F)
+las24c$replicate<- "c"
+
+las024<- rbind(las24a, las24b, las24c)
+
+#alright, so we know that we only want an intensity below one, and visible spetra are 
+#from 400-750nm¨
+
+las024_cut<- las024 %>%
+             filter(V2 < 1) %>% #V2 = spc
+             filter(V1 > 400) %>%
+             mutate(
+               wavelength = V1,
+               intensity = V2,
+               ave = mean(V2),
+               Pool_ID = "024")
+
+#POOL 025
+las25a<- read.csv("las-025-a-DataSet1.csv", header = F)
+las25a$replicate<- "a"
+las25b<- read.csv("las-025-b-DataSet1.csv", header = F)
+las25b$replicate<- "b"
+las25c<- read.csv("las-025-c-DataSet1.csv", header = F)
+las25c$replicate<- "c"
+
+las025<- rbind(las25a, las25b, las25c)
+
+#alright, so we know that we only want an intensity below one, and visible spetra are 
+#from 400-750nm¨
+
+las025_cut<- las025 %>%
+             filter(V2 < 1) %>% #V2 = spc
+             filter(V1 > 400) %>%
+             mutate(
+               wavelength = V1,
+               intensity = V2,
+               ave = mean(V2),
+               Pool_ID = "025")
+
+#POOL 026
+las26a<- read.csv("las-026-a-DataSet1.csv", header = F)
+las26a$replicate<- "a"
+las26b<- read.csv("las-026-b-DataSet1.csv", header = F)
+las26b$replicate<- "b"
+
+las026<- rbind(las26a, las26b)
+
+#alright, so we know that we only want an intensity below one, and visible spetra are 
+#from 400-750nm¨
+
+las026_cut<- las026 %>%
+             filter(V2 < 1) %>% #V2 = spc
+             filter(V1 > 400) %>%
+             mutate(
+               wavelength = V1,
+               intensity = V2,
+               ave = mean(V2),
+               Pool_ID = "026")
+
+#POOL 027
+las27a<- read.csv("las-027-a-DataSet1.csv", header = F)
+las27a$replicate<- "a"
+las27b<- read.csv("las-027-b-DataSet1.csv", header = F)
+las27b$replicate<- "b"
+las27c<- read.csv("las-027-c-DataSet1.csv", header = F)
+las27c$replicate<- "c"
+
+las027<- rbind(las27a, las27b, las27c)
+
+#alright, so we know that we only want an intensity below one, and visible spetra are 
+#from 400-750nm¨
+
+las027_cut<- las027 %>%
+             filter(V2 < 1) %>% #V2 = spc
+             filter(V1 > 400) %>%
+             mutate(
+               wavelength = V1,
+               intensity = V2,
+               ave = mean(V2),
+               Pool_ID = "027")
+
+#POOL 028
+las28a<- read.csv("las-028-a-DataSet1.csv", header = F)
+las28a$replicate<- "a"
+las28b<- read.csv("las-028-b-DataSet1.csv", header = F)
+las28b$replicate<- "b"
+las28c<- read.csv("las-028-c-DataSet1.csv", header = F)
+las28c$replicate<- "c"
+
+las028<- rbind(las28a, las28b, las28c)
+
+#alright, so we know that we only want an intensity below one, and visible spetra are 
+#from 400-750nm¨
+
+las028_cut<- las028 %>%
+             filter(V2 < 1) %>% #V2 = spc
+             filter(V1 > 400) %>%
+             mutate(
+               wavelength = V1,
+               intensity = V2,
+               ave = mean(V2),
+               Pool_ID = "028")
+
+#POOL 029
+las29a<- read.csv("las-029-a-DataSet1.csv", header = F)
+las29a$replicate<- "a"
+las29b<- read.csv("las-029-b-DataSet1.csv", header = F)
+las29b$replicate<- "b"
+
+las029<- rbind(las29a, las29b)
+
+#alright, so we know that we only want an intensity below one, and visible spetra are 
+#from 400-750nm¨
+
+las029_cut<- las029 %>%
+             filter(V2 < 1) %>% #V2 = spc
+             filter(V1 > 400) %>%
+             mutate(
+               wavelength = V1,
+               intensity = V2,
+               ave = mean(V2),
+               Pool_ID = "029")
+
+#POOL 030
+las30a<- read.csv("las-030-a-DataSet1.csv", header = F)
+las30a$replicate<- "a"
+las30b<- read.csv("las-030-b-DataSet1.csv", header = F)
+las30b$replicate<- "b"
+las30c<- read.csv("las-030-c-DataSet1.csv", header = F)
+las30c$replicate<- "c"
+
+las030<- rbind(las30a, las30b, las30c)
+
+#alright, so we know that we only want an intensity below one, and visible spetra are 
+#from 400-750nm¨
+
+las030_cut<- las030 %>%
+             filter(V2 < 1) %>% #V2 = spc
+             filter(V1 > 400) %>%
+             mutate(
+               wavelength = V1,
+               intensity = V2,
+               ave = mean(V2),
+               Pool_ID = "030")
+
+```
+
+What if we then did a mega concatination?
+
+```{r Giant Concat}
+
+las_mega <- bind_rows(las001_cut, las002_cut, las003_cut, las004_cut, las005_cut,
+                      las006_cut, las007_cut, las008_cut,las008_cut,
+                      las008_cut, las009_cut,las010_cut, las011_cut,
+                      las012_cut, las013_cut, las014_cut, las015_cut,
+                      las016_cut, las017_cut, las018_cut, las019_cut,
+                      las020_cut, las021_cut, las022_cut, las023_cut,
+                      las024_cut, las025_cut, las026_cut, las027_cut,
+                      las028_cut, las029_cut, las030_cut) %>%
+            select(!c(V1, V2))%>%
+            mutate(Pool_ID = as.factor(Pool_ID),
+                   Replicate = as.factor(replicate),
+                   Pool = forcats::fct_reorder(Pool_ID, -ave)) %>%
+            group_by(Pool_ID) %>%
+            mutate(ranges = max(intensity)-min(intensity))%>%
+            ungroup()
+  
+#for smaller more manageable dataset 
+las_unique <- las_mega %>%
+              group_by(Pool_ID) %>%
+              distinct(Pool_ID, ranges, ave)
+
+```
+
+Here we aree going to steard breaking down spectral means and whatnot:
+
+```{r Ggplotting- Spectral Means}
+
+#VALUE OF USING SPECTRAL MEANS
+train<- ggplot()+
+  #geom_point() + 
+    geom_line(data = las017_cut, aes(x = wavelength, y = intensity, 
+                                   color = replicate))+
+  geom_line(data =las017_cut, aes(x = wavelength, y = intensity, color = replicate, group = Pool_ID), color = "lightgrey", alpha = 0.3)+
+  geom_hline(yintercept = las017_cut$ave, linetype = "dashed")+
+  geom_text(color = "black", label = "LAS017 spectral mean- Turbid pool", 
+            check_overlap = T, size = 3, 
+            aes(x = 440, y = 0.6))+
+  geom_line(data = las027_cut, aes(x = wavelength, y = intensity, 
+                                   color = replicate))+
+  geom_line(data =las027_cut, aes(x = wavelength, y = intensity, color = replicate, group = Pool_ID), color = "lightgrey", alpha = 0.3)+
+  geom_hline(yintercept = las027_cut$ave, linetype = "dashed")+
+    geom_text(color = "black", label = "LAS027 spectral mean- Clear pool", 
+            check_overlap = T, size = 3, 
+            aes(x = 440, y = 0.07))+
+  ylab("Intensity (arbitrary units)")+
+  scale_color_brewer(palette = "Paired")+
+  xlab(expression(Wavelength ~ Delta * tilde(nu)/cm^-1))+
+  coord_cartesian(ylim = c(0,1)) + 
+  theme(legend.position = "None")
+
+ggsave("spectral_demo.png", plot = train, height = 7.36, width = 8.5)
+
+```
+
+```{r Giant concate plots}
+#This one take about 30 seconds to load
+#There exists variation in the sampled pools, and spectra averages are a good summary of overall color capture of darker vs. lighter
+
+#### Facets coded in descending order from higherst to lowest average intensity
+ggplot(las_mega, aes(x = wavelength, y = intensity)) + 
+  #geom_point() + 
+  geom_line(aes(group = replicate))+
+  geom_hline(aes(yintercept = ave, color = Pool), 
+             linetype = "dashed", size = 1)+
+  facet_wrap(~ Pool) +
+  theme(legend.position = "None")
+
+
+## Similar to graph above, but grouped by replicate.
+spec_div<- ggplot(las_mega, aes(x = wavelength, y = intensity)) + 
+  #geom_point() + 
+  #geom_path()+
+  geom_line(aes(group = Pool), color = "lightgrey", 
+            alpha = 0.3)+
+  geom_hline(aes(yintercept = ave, color = Pool), 
+             linetype = "dashed", size = 1)+
+ # gghighlight(mean(intensity) > 0.75 | mean(intensity) < 0.15, 
+             # use_direct_label = F, calculate_per_facet = T)+
+  facet_wrap(~ Pool) +
+  theme(legend.position = "None")+
+  ylab("Intensity (arbitrary units)")+
+  xlab(expression(Wavelength ~ Delta * tilde(nu)/cm^-1))
+
+ggsave("specdiv.png", plot = spec_div, height = 7, width = 12)
+
+```
+
+
+intensity vs. ranges
+
+So **INTENSITY** here is a stand-in for overall colour/turbidity, where higher averages have higher peaks across the colour spectrum, leading to overall darker water (pers. obs). On the other hand, **RANGE** is calculated as the maximum intensity- minimum intensity *WITHIN* a pool-- the idea here is that the pools with larger ranges are more turbid because there is more suspended stuff floating around (and consequently falling down) as samples get processed.
+
+```{r Intensity vs. Ranges}
+#Ranges and average pool intensity
+av_int<- ggplot(las_unique, aes(x = ave, y = ranges, color = Pool_ID)) + 
+  geom_point(shape = 21,  size = 2, 
+             stroke = 1.2)+ #alpha = 0.3,
+   stat_smooth(method = "gam", 
+              formula = y ~ x, #log(x)
+              color = "black", 
+              fill = NA)+
+  stat_smooth(method = "gam", 
+              geom = "ribbon",
+              formula = y ~ x, #log(x)
+              color = "black", 
+              fill = "lightgrey", 
+              alpha = 0.2, 
+              linetype = "dashed")+
+  theme(legend.position = "None")+
+  ylab("Pool intensity range")+
+  xlab("Average pool intensity (arbitrary units)")
+
+ggsave("av_int.png", plot = av_int)
+
+```
+
+
+```{r}
+set.seed(1)
+las3<- new("hyperSpec", spc = as.numeric(las003$V2), wavelength = as.numeric(las003$V1))
+
+las3
+
+faux_cell_preproc <- faux_cell - spc_fit_poly_below(faux_cell)
+faux_cell_preproc <- faux_cell_preproc / rowMeans(faux_cell)
+faux_cell_preproc <- faux_cell_preproc - quantile(faux_cell_preproc, 0.05)
+
+cluster_cols <- c("dark blue", "orange", "#C02020")
+cluster_meansd <- aggregate(faux_cell_preproc, faux_cell$region, mean_pm_sd)
+cluster_means <- aggregate(faux_cell_preproc, faux_cell$region, mean)
+```
+
+Preliminary Calculations For some plots of the faux_cell dataset, the pre-processed spectra and their cluster averages ± one standard deviation are more suitable:
+
+```{r}
+set.seed(1)
+faux_cell <- generate_faux_cell()
+
+faux_cell_preproc <- faux_cell - spc_fit_poly_below(faux_cell)
+faux_cell_preproc <- faux_cell_preproc / rowMeans(faux_cell)
+faux_cell_preproc <- faux_cell_preproc - quantile(faux_cell_preproc, 0.05)
+
+cluster_cols <- c("dark blue", "orange", "#C02020")
+cluster_meansd <- aggregate(faux_cell_preproc, faux_cell$region, mean_pm_sd)
+cluster_means <- aggregate(faux_cell_preproc, faux_cell$region, mean)
+```
+
+Removing Spectra outside mean ± n sd
+
+```{r}
+> mean_sd_filter <- function (x, n = 5) {
++ x <- x - mean (x)
++ s <- n * sd (x)
++ (x <= s) & (x > -s)
++ }
+> OK <- apply (chondro [[]], 2, mean_sd_filter, n = 4) # logical matrix
+> spc.OK <- chondro [apply (OK, 1, all)]
+```
