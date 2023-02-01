@@ -6,7 +6,7 @@ Hello! This is the raw data and code for the Fouilloux et al. (2023) paper explo
 
 ## Code ##
 
-**las_turb** is the turbidity data from La Selva, Costa Rica. 
+**Pumilio_Turb_Final** is the turbidity data from La Selva, Costa Rica. 
 
 **Tinctorius_Turb_Final** is the turbidity data from Les Nouragues, French Guiana. 
 
