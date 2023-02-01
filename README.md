@@ -8,7 +8,7 @@ Hello! This is the raw data and code for the Fouilloux et al. (2023) paper explo
 
 **las_turb** is the turbidity data from La Selva, Costa Rica. 
 
-**parare_turb** is the turbidity data from Les Nouragues, French Guiana. 
+**Tinctorius_Turb_Final** is the turbidity data from Les Nouragues, French Guiana. 
 
 **water_spectra** are the spectrophotometry measurements/analysis from nursery water samples from La Selva, CR.
 
@@ -54,7 +54,7 @@ Hello! This is the raw data and code for the Fouilloux et al. (2023) paper explo
 
 *rMean_OG* (b, g) are the mean red, blue, or green channel percent reflectance from photographs.
 
-### **FG_TURB_OCT2022 is the raw data from Les Nouragues (Parare), French Guiana** ###
+### **FG_TURB_JAN2023 is the raw data from Les Nouragues (Parare), French Guiana** ###
 
 *Tad_ID* individual ID given to each tadpole
 
