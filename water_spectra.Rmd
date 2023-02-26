@@ -6,12 +6,12 @@ output: html_document
 ---
 
 ```{r Load Packages}
-#Giving up and having .csv files instead
 library(ggplot2)
 library(dplyr)
 library(gghighlight)
 library(hyperSpec)
 library(RColorBrewer)
+library(ggtext)
 
 #Theme Set----
 theme_set(  theme(legend.position = "right",
@@ -24,6 +24,11 @@ theme_set(  theme(legend.position = "right",
 ```
 
 Alright, let's try with one pool and all of its replicates
+
+We will be converting absorbance into transmittance, Abs = log(1/T)
+
+10^Abs = 1/T
+T = 1/10^Abs
 
 ```{r}
 
@@ -38,13 +43,20 @@ las1c$replicate<- "c"
 las001<- las1c
 
 las001_cut<- las001 %>%
-             filter(V2 < 1) %>% #V2 = spc
-             filter(V1 > 400) %>%
+     filter(V1 >= 300) %>%
+     filter(V1 <= 700) %>%
+     filter(V2 <= 1) %>% #less than or equal to 1
              mutate(
                wavelength = V1, 
-               intensity = V2,
-               ave = mean(V2), 
-               Pool_ID = "001")
+               abs = V2,
+               trans = 1/(10^abs), #transmittance
+               ave = mean(V2),  
+               Pool_ID = "001") %>%
+              group_by(replicate) %>%
+             mutate(max_trans = max(trans)) %>%
+             ungroup() %>%
+             mutate(ave_max_trans = mean(max_trans))
+
 #POOL 002
 las2a<- read.csv("las-002-a-DataSet1.csv", header = F)
 las2a$replicate<- "a"
@@ -55,12 +67,18 @@ las002<- rbind(las2a, las2b)
 
 las002_cut<- las002 %>%
              filter(V2 < 1) %>% #V2 = spc
-             filter(V1 > 400) %>%
+          filter(V1 >= 300) %>%
+               filter(V1 <= 700) %>%
              mutate(
-               wavelength = V1,
-               intensity = V2,
+               wavelength = V1, 
+               abs = V2,
+               trans = 1/(10^abs), #tranmittance
                ave = mean(V2), 
-               Pool_ID = "002")
+               Pool_ID = "002")%>%
+              group_by(replicate) %>% #now look at each of the technical replicates please
+             mutate(max_trans = max(trans)) %>% #within each replicate, please give me the max transmittance
+             ungroup() %>%
+             mutate(ave_max_trans = mean(max_trans)) #take the average between these three replicates
 
 #POOL 003
 las3a<- read.csv("las-003-a-DataSet1.csv", header = F)
@@ -77,12 +95,18 @@ las003<- rbind(las3a, las3b, las3c)
 
 las003_cut<- las003 %>%
              filter(V2 < 1) %>% #V2 = spc
-             filter(V1 > 400) %>%
+             filter(V1 >= 300) %>%
+               filter(V1 <= 700) %>%
              mutate(
-               wavelength = V1,
-               intensity = V2,
+               wavelength = V1, 
+               abs = V2,
+               trans = 1/(10^abs), #tranmittance
                ave = mean(V2),
-               Pool_ID = "003")
+               Pool_ID = "003") %>%
+             group_by(replicate) %>%
+             mutate(max_trans = max(trans)) %>%
+             ungroup() %>%
+             mutate(ave_max_trans = mean(max_trans))
 
 #POOL 004
 las4a<- read.csv("las-004-a-DataSet1.csv", header = F)
@@ -99,12 +123,18 @@ las004<- rbind(las4a, las4b, las4c)
 
 las004_cut<- las004 %>%
              filter(V2 < 1) %>% #V2 = spc
-             filter(V1 > 400) %>%
+             filter(V1 >= 300) %>%
+               filter(V1 <= 700) %>%
              mutate(
-               wavelength = V1,
-               intensity = V2,
+              wavelength = V1, 
+               abs = V2,
+               trans = 1/(10^abs), #tranmittance
                ave = mean(V2),
-               Pool_ID = "004")
+               Pool_ID = "004")%>%
+              group_by(replicate) %>%
+             mutate(max_trans = max(trans)) %>%
+             ungroup() %>%
+             mutate(ave_max_trans = mean(max_trans))
 
 #POOL 005
 las5a<- read.csv("las-005-a-DataSet1.csv", header = F)
@@ -121,12 +151,18 @@ las005<- rbind(las5a, las5b, las5c)
 
 las005_cut<- las005 %>%
              filter(V2 < 1) %>% #V2 = spc
-             filter(V1 > 400) %>%
+              filter(V1 >= 300) %>%
+               filter(V1 <= 700) %>%
              mutate(
-               wavelength = V1,
-               intensity = V2,
+               wavelength = V1, 
+               abs = V2,
+               trans = 1/(10^abs), #tranmittance
                ave = mean(V2),
-               Pool_ID = "005")
+               Pool_ID = "005")%>%
+              group_by(replicate) %>%
+             mutate(max_trans = max(trans)) %>%
+             ungroup() %>%
+             mutate(ave_max_trans = mean(max_trans))
 
 #POOL 006
 las6a<- read.csv("las-006-a-DataSet1.csv", header = F)
@@ -143,12 +179,18 @@ las006<- rbind(las6a, las6b, las6c)
 
 las006_cut<- las006 %>%
              filter(V2 < 1) %>% #V2 = spc
-             filter(V1 > 400) %>%
+             filter(V1 >= 300) %>%
+            filter(V1 <= 700) %>%
              mutate(
-               wavelength = V1,
-               intensity = V2,
+             wavelength = V1, 
+               abs = V2,
+               trans = 1/(10^abs), #tranmittance
                ave = mean(V2),
-               Pool_ID = "006")
+               Pool_ID = "006")%>%
+              group_by(replicate) %>%
+             mutate(max_trans = max(trans)) %>%
+             ungroup() %>%
+             mutate(ave_max_trans = mean(max_trans))
 
 #POOL 007
 las7a<- read.csv("las-007-a-DataSet1.csv", header = F)
@@ -165,12 +207,18 @@ las007<- rbind(las7a, las7b, las7c)
 
 las007_cut<- las007 %>%
              filter(V2 < 1) %>% #V2 = spc
-             filter(V1 > 400) %>%
+             filter(V1 >= 300) %>%
+               filter(V1 <= 700) %>%
              mutate(
-               wavelength = V1,
-               intensity = V2,
+             wavelength = V1, 
+               abs = V2,
+               trans = 1/(10^abs), #tranmittance
                ave = mean(V2),
-               Pool_ID = "007")
+               Pool_ID = "007")%>%
+              group_by(replicate) %>%
+             mutate(max_trans = max(trans)) %>%
+             ungroup() %>%
+             mutate(ave_max_trans = mean(max_trans))
 
 #POOL 008
 las8a<- read.csv("las-008-a-DataSet1.csv", header = F)
@@ -187,12 +235,18 @@ las008<- rbind(las8a, las8b, las8c)
 
 las008_cut<- las008 %>%
              filter(V2 < 1) %>% #V2 = spc
-             filter(V1 > 400) %>%
+            filter(V1 >= 300) %>%
+               filter(V1 <= 700) %>%
              mutate(
-               wavelength = V1,
-               intensity = V2,
+              wavelength = V1, 
+               abs = V2,
+               trans = 1/(10^abs), #tranmittance
                ave = mean(V2),
-               Pool_ID = "008")
+               Pool_ID = "008")%>%
+              group_by(replicate) %>%
+             mutate(max_trans = max(trans)) %>%
+             ungroup() %>%
+             mutate(ave_max_trans = mean(max_trans))
 
 #POOL 009
 las9a<- read.csv("las-009-a-DataSet1.csv", header = F)
@@ -209,12 +263,18 @@ las009<- rbind(las9a, las9b, las9c)
 
 las009_cut<- las009 %>%
              filter(V2 < 1) %>% #V2 = spc
-             filter(V1 > 400) %>%
+              filter(V1 >= 300) %>%
+               filter(V1 <= 700) %>%
              mutate(
-               wavelength = V1,
-               intensity = V2,
+           wavelength = V1, 
+               abs = V2,
+               trans = 1/(10^abs), #tranmittance
                ave = mean(V2),
-               Pool_ID = "009")
+               Pool_ID = "009")%>%
+              group_by(replicate) %>%
+             mutate(max_trans = max(trans)) %>%
+             ungroup() %>%
+             mutate(ave_max_trans = mean(max_trans))
 
 #POOL 010
 las10a<- read.csv("las-010-a-DataSet1.csv", header = F)
@@ -231,12 +291,18 @@ las010<- rbind(las10a, las10b, las10c)
 
 las010_cut<- las010 %>%
              filter(V2 < 1) %>% #V2 = spc
-             filter(V1 > 400) %>%
+           filter(V1 >= 300) %>%
+               filter(V1 <= 700) %>%
              mutate(
-               wavelength = V1,
-               intensity = V2,
+              wavelength = V1, 
+               abs = V2,
+               trans = 1/(10^abs), #tranmittance
                ave = mean(V2),
-               Pool_ID = "010")
+               Pool_ID = "010")%>%
+              group_by(replicate) %>%
+             mutate(max_trans = max(trans)) %>%
+             ungroup() %>%
+             mutate(ave_max_trans = mean(max_trans))
 
 #POOL 011
 las11a<- read.csv("las-011-a-DataSet1.csv", header = F)
@@ -253,12 +319,18 @@ las011<- rbind(las11a, las11b, las11c)
 
 las011_cut<- las011 %>%
              filter(V2 < 1) %>% #V2 = spc
-             filter(V1 > 400) %>%
+           filter(V1 >= 300) %>%
+               filter(V1 <= 700) %>%
              mutate(
-               wavelength = V1,
-               intensity = V2,
+              wavelength = V1, 
+               abs = V2,
+               trans = 1/(10^abs), #tranmittance
                ave = mean(V2),
-               Pool_ID = "011")
+               Pool_ID = "011")%>%
+              group_by(replicate) %>%
+             mutate(max_trans = max(trans)) %>%
+             ungroup() %>%
+             mutate(ave_max_trans = mean(max_trans))
 
 #POOL 012
 las12a<- read.csv("las-012-a-DataSet1.csv", header = F)
@@ -275,12 +347,18 @@ las012<- rbind(las12a, las12b, las12c)
 
 las012_cut<- las012 %>%
              filter(V2 < 1) %>% #V2 = spc
-             filter(V1 > 400) %>%
+               filter(V1 >= 300) %>%
+               filter(V1 <= 700) %>%
              mutate(
-               wavelength = V1,
-               intensity = V2,
+             wavelength = V1, 
+               abs = V2,
+               trans = 1/(10^abs), #tranmittance
                ave = mean(V2),
-               Pool_ID = "012")
+               Pool_ID = "012")%>%
+              group_by(replicate) %>%
+             mutate(max_trans = max(trans)) %>%
+             ungroup() %>%
+             mutate(ave_max_trans = mean(max_trans))
 
 #POOL 013
 las13a<- read.csv("las-013-a-DataSet1.csv", header = F)
@@ -297,12 +375,18 @@ las013<- rbind(las13a, las13b, las13c)
 
 las013_cut<- las013 %>%
              filter(V2 < 1) %>% #V2 = spc
-             filter(V1 > 400) %>%
+               filter(V1 >= 300) %>%
+               filter(V1 <= 700) %>%
              mutate(
-               wavelength = V1,
-               intensity = V2,
+               wavelength = V1, 
+               abs = V2,
+               trans = 1/(10^abs), #tranmittance
                ave = mean(V2),
-               Pool_ID = "013")
+               Pool_ID = "013")%>%
+              group_by(replicate) %>%
+             mutate(max_trans = max(trans)) %>%
+             ungroup() %>%
+             mutate(ave_max_trans = mean(max_trans))
 
 #POOL 014
 las14a<- read.csv("las-014-a-DataSet1.csv", header = F)
@@ -319,12 +403,18 @@ las014<- rbind(las14a, las14b, las14c)
 
 las014_cut<- las014 %>%
              filter(V2 < 1) %>% #V2 = spc
-             filter(V1 > 400) %>%
+              filter(V1 >= 300) %>%
+               filter(V1 <= 700) %>%
              mutate(
-               wavelength = V1,
-               intensity = V2,
+           wavelength = V1, 
+               abs = V2,
+               trans = 1/(10^abs), #tranmittance
                ave = mean(V2),
-               Pool_ID = "014")
+               Pool_ID = "014")%>%
+              group_by(replicate) %>%
+             mutate(max_trans = max(trans)) %>%
+             ungroup() %>%
+             mutate(ave_max_trans = mean(max_trans))
 
 #POOL 015
 las15a<- read.csv("las-015-a-DataSet1.csv", header = F)
@@ -341,12 +431,18 @@ las015<- rbind(las15a, las15b, las15c)
 
 las015_cut<- las015 %>%
              filter(V2 < 1) %>% #V2 = spc
-             filter(V1 > 400) %>%
+             filter(V1 >= 300) %>%
+               filter(V1 <= 700) %>%
              mutate(
-               wavelength = V1,
-               intensity = V2,
+               wavelength = V1, 
+               abs = V2,
+               trans = 1/(10^abs), #tranmittance
                ave = mean(V2),
-               Pool_ID = "015")
+               Pool_ID = "015")%>%
+              group_by(replicate) %>%
+             mutate(max_trans = max(trans)) %>%
+             ungroup() %>%
+             mutate(ave_max_trans = mean(max_trans))
 
 #POOL 016
 las16a<- read.csv("las-016-a-DataSet1.csv", header = F)
@@ -363,12 +459,18 @@ las016<- rbind(las16a, las16b, las16c)
 
 las016_cut<- las016 %>%
              filter(V2 < 1) %>% #V2 = spc
-             filter(V1 > 400) %>%
+               filter(V1 >= 300) %>%
+               filter(V1 <= 700) %>%
              mutate(
-               wavelength = V1,
-               intensity = V2,
+               wavelength = V1, 
+               abs = V2,
+               trans = 1/(10^abs), #tranmittance
                ave = mean(V2),
-               Pool_ID = "016")
+               Pool_ID = "016")%>%
+              group_by(replicate) %>%
+             mutate(max_trans = max(trans)) %>%
+             ungroup() %>%
+             mutate(ave_max_trans = mean(max_trans))
 
 #POOL 017
 las17a<- read.csv("las-017-a-DataSet1.csv", header = F)
@@ -385,12 +487,18 @@ las017<- rbind(las17a, las17b, las17c)
 
 las017_cut<- las017 %>%
              filter(V2 < 1) %>% #V2 = spc
-             filter(V1 > 400) %>%
+              filter(V1 >= 300) %>%
+               filter(V1 <= 700) %>%
              mutate(
-               wavelength = V1,
-               intensity = V2,
+             wavelength = V1, 
+               abs = V2,
+               trans = 1/(10^abs), #tranmittance
                ave = mean(V2),
-               Pool_ID = "017")
+               Pool_ID = "017")%>%
+              group_by(replicate) %>%
+             mutate(max_trans = max(trans)) %>%
+             ungroup() %>%
+             mutate(ave_max_trans = mean(max_trans))
 
 #POOL 018
 las18a<- read.csv("las-018-a-DataSet1.csv", header = F)
@@ -407,12 +515,18 @@ las018<- rbind(las18a, las18b, las18c)
 
 las018_cut<- las018 %>%
              filter(V2 < 1) %>% #V2 = spc
-             filter(V1 > 400) %>%
+               filter(V1 >= 300) %>%
+               filter(V1 <= 700) %>%
              mutate(
-               wavelength = V1,
-               intensity = V2,
+               wavelength = V1, 
+               abs = V2,
+               trans = 1/(10^abs), #tranmittance
                ave = mean(V2),
-               Pool_ID = "018")
+               Pool_ID = "018")%>%
+              group_by(replicate) %>%
+             mutate(max_trans = max(trans)) %>%
+             ungroup() %>%
+             mutate(ave_max_trans = mean(max_trans))
 
 #POOL 019
 las19a<- read.csv("las-019-a-DataSet1.csv", header = F)
@@ -429,12 +543,18 @@ las019<- rbind(las19a, las19b, las19c)
 
 las019_cut<- las019 %>%
              filter(V2 < 1) %>% #V2 = spc
-             filter(V1 > 400) %>%
+               filter(V1 >= 300) %>%
+               filter(V1 <= 700) %>%
              mutate(
-               wavelength = V1,
-               intensity = V2,
+             wavelength = V1, 
+               abs = V2,
+               trans = 1/(10^abs), #tranmittance
                ave = mean(V2),
-               Pool_ID = "019")
+               Pool_ID = "019")%>%
+              group_by(replicate) %>%
+             mutate(max_trans = max(trans)) %>%
+             ungroup() %>%
+             mutate(ave_max_trans = mean(max_trans))
 
 #POOL 020
 las20a<- read.csv("las-020-a-DataSet1.csv", header = F)
@@ -451,12 +571,18 @@ las020<- rbind(las20a, las20b, las20c)
 
 las020_cut<- las020 %>%
              filter(V2 < 1) %>% #V2 = spc
-             filter(V1 > 400) %>%
+               filter(V1 >= 300) %>%
+               filter(V1 <= 700) %>%
              mutate(
-               wavelength = V1,
-               intensity = V2,
+              wavelength = V1, 
+               abs = V2,
+               trans = 1/(10^abs), #tranmittance
                ave = mean(V2),
-               Pool_ID = "020")
+               Pool_ID = "020")%>%
+              group_by(replicate) %>%
+             mutate(max_trans = max(trans)) %>%
+             ungroup() %>%
+             mutate(ave_max_trans = mean(max_trans))
 
 #POOL 020
 las20a<- read.csv("las-020-a-DataSet1.csv", header = F)
@@ -473,12 +599,18 @@ las020<- rbind(las20a, las20b, las20c)
 
 las020_cut<- las020 %>%
              filter(V2 < 1) %>% #V2 = spc
-             filter(V1 > 400) %>%
+               filter(V1 >= 300) %>%
+               filter(V1 <= 700) %>%
              mutate(
-               wavelength = V1,
-               intensity = V2,
+               wavelength = V1, 
+               abs = V2,
+               trans = 1/(10^abs), #tranmittance
                ave = mean(V2),
-               Pool_ID = "020")
+               Pool_ID = "020")%>%
+              group_by(replicate) %>%
+             mutate(max_trans = max(trans)) %>%
+             ungroup() %>%
+             mutate(ave_max_trans = mean(max_trans))
 
 #POOL 021
 las21a<- read.csv("las-021-a-DataSet1.csv", header = F)
@@ -495,12 +627,18 @@ las021<- rbind(las21a, las21b, las21c)
 
 las021_cut<- las021 %>%
              filter(V2 < 1) %>% #V2 = spc
-             filter(V1 > 400) %>%
+               filter(V1 >= 300) %>%
+               filter(V1 <= 700) %>%
              mutate(
-               wavelength = V1,
-               intensity = V2,
+               wavelength = V1, 
+               abs = V2,
+               trans = 1/(10^abs), #tranmittance
                ave = mean(V2),
-               Pool_ID = "021")
+               Pool_ID = "021")%>%
+              group_by(replicate) %>%
+             mutate(max_trans = max(trans)) %>%
+             ungroup() %>%
+             mutate(ave_max_trans = mean(max_trans))
 
 #POOL 022
 las22a<- read.csv("las-022-a-DataSet1.csv", header = F)
@@ -517,12 +655,18 @@ las022<- rbind(las22a, las22b, las22c)
 
 las022_cut<- las022 %>%
              filter(V2 < 1) %>% #V2 = spc
-             filter(V1 > 400) %>%
+               filter(V1 >= 300) %>%
+               filter(V1 <= 700) %>%
              mutate(
-               wavelength = V1,
-               intensity = V2,
+               wavelength = V1, 
+               abs = V2,
+               trans = 1/(10^abs), #tranmittance
                ave = mean(V2),
-               Pool_ID = "022")
+               Pool_ID = "022")%>%
+              group_by(replicate) %>%
+             mutate(max_trans = max(trans)) %>%
+             ungroup() %>%
+             mutate(ave_max_trans = mean(max_trans))
 
 #POOL 023
 las23a<- read.csv("las-023-a-DataSet1.csv", header = F)
@@ -539,12 +683,18 @@ las023<- rbind(las23a, las23b, las23c)
 
 las023_cut<- las023 %>%
              filter(V2 < 1) %>% #V2 = spc
-             filter(V1 > 400) %>%
+               filter(V1 >= 300) %>%
+               filter(V1 <= 700) %>%
              mutate(
-               wavelength = V1,
-               intensity = V2,
+               wavelength = V1, 
+               abs = V2,
+               trans = 1/(10^abs), #tranmittance
                ave = mean(V2),
-               Pool_ID = "023")
+               Pool_ID = "023")%>%
+              group_by(replicate) %>%
+             mutate(max_trans = max(trans)) %>%
+             ungroup() %>%
+             mutate(ave_max_trans = mean(max_trans))
 
 #POOL 024
 las24a<- read.csv("las-024-a-DataSet1.csv", header = F)
@@ -561,12 +711,18 @@ las024<- rbind(las24a, las24b, las24c)
 
 las024_cut<- las024 %>%
              filter(V2 < 1) %>% #V2 = spc
-             filter(V1 > 400) %>%
+               filter(V1 >= 300) %>%
+               filter(V1 <= 700) %>%
              mutate(
-               wavelength = V1,
-               intensity = V2,
+               wavelength = V1, 
+               abs = V2,
+               trans = 1/(10^abs), #tranmittance
                ave = mean(V2),
-               Pool_ID = "024")
+               Pool_ID = "024")%>%
+              group_by(replicate) %>%
+             mutate(max_trans = max(trans)) %>%
+             ungroup() %>%
+             mutate(ave_max_trans = mean(max_trans))
 
 #POOL 025
 las25a<- read.csv("las-025-a-DataSet1.csv", header = F)
@@ -583,12 +739,18 @@ las025<- rbind(las25a, las25b, las25c)
 
 las025_cut<- las025 %>%
              filter(V2 < 1) %>% #V2 = spc
-             filter(V1 > 400) %>%
+               filter(V1 >= 300) %>%
+               filter(V1 <= 700) %>%
              mutate(
-               wavelength = V1,
-               intensity = V2,
+              wavelength = V1, 
+               abs = V2,
+               trans = 1/(10^abs), #tranmittance
                ave = mean(V2),
-               Pool_ID = "025")
+               Pool_ID = "025")%>%
+              group_by(replicate) %>%
+             mutate(max_trans = max(trans)) %>%
+             ungroup() %>%
+             mutate(ave_max_trans = mean(max_trans))
 
 #POOL 026
 las26a<- read.csv("las-026-a-DataSet1.csv", header = F)
@@ -603,12 +765,18 @@ las026<- rbind(las26a, las26b)
 
 las026_cut<- las026 %>%
              filter(V2 < 1) %>% #V2 = spc
-             filter(V1 > 400) %>%
+               filter(V1 >= 300) %>%
+               filter(V1 <= 700) %>%
              mutate(
-               wavelength = V1,
-               intensity = V2,
+               wavelength = V1, 
+               abs = V2,
+               trans = 1/(10^abs), #tranmittance
                ave = mean(V2),
-               Pool_ID = "026")
+               Pool_ID = "026")%>%
+              group_by(replicate) %>%
+             mutate(max_trans = max(trans)) %>%
+             ungroup() %>%
+             mutate(ave_max_trans = mean(max_trans))
 
 #POOL 027
 las27a<- read.csv("las-027-a-DataSet1.csv", header = F)
@@ -625,12 +793,18 @@ las027<- rbind(las27a, las27b, las27c)
 
 las027_cut<- las027 %>%
              filter(V2 < 1) %>% #V2 = spc
-             filter(V1 > 400) %>%
+               filter(V1 >= 300) %>%
+               filter(V1 <= 700) %>%
              mutate(
-               wavelength = V1,
-               intensity = V2,
+              wavelength = V1, 
+               abs = V2,
+               trans = 1/(10^abs), #tranmittance
                ave = mean(V2),
-               Pool_ID = "027")
+               Pool_ID = "027")%>%
+              group_by(replicate) %>%
+             mutate(max_trans = max(trans)) %>%
+             ungroup() %>%
+             mutate(ave_max_trans = mean(max_trans))
 
 #POOL 028
 las28a<- read.csv("las-028-a-DataSet1.csv", header = F)
@@ -647,12 +821,18 @@ las028<- rbind(las28a, las28b, las28c)
 
 las028_cut<- las028 %>%
              filter(V2 < 1) %>% #V2 = spc
-             filter(V1 > 400) %>%
+               filter(V1 >= 300) %>%
+               filter(V1 <= 700) %>%
              mutate(
-               wavelength = V1,
-               intensity = V2,
+              wavelength = V1, 
+               abs = V2,
+               trans = 1/(10^abs), #tranmittance
                ave = mean(V2),
-               Pool_ID = "028")
+               Pool_ID = "028")%>%
+              group_by(replicate) %>%
+             mutate(max_trans = max(trans)) %>%
+             ungroup() %>%
+             mutate(ave_max_trans = mean(max_trans))
 
 #POOL 029
 las29a<- read.csv("las-029-a-DataSet1.csv", header = F)
@@ -667,12 +847,18 @@ las029<- rbind(las29a, las29b)
 
 las029_cut<- las029 %>%
              filter(V2 < 1) %>% #V2 = spc
-             filter(V1 > 400) %>%
+               filter(V1 >= 300) %>%
+               filter(V1 <= 700) %>%
              mutate(
-               wavelength = V1,
-               intensity = V2,
+              wavelength = V1, 
+               abs = V2,
+               trans = 1/(10^abs), #tranmittance
                ave = mean(V2),
-               Pool_ID = "029")
+               Pool_ID = "029")%>%
+              group_by(replicate) %>%
+             mutate(max_trans = max(trans)) %>%
+             ungroup() %>%
+             mutate(ave_max_trans = mean(max_trans))
 
 #POOL 030
 las30a<- read.csv("las-030-a-DataSet1.csv", header = F)
@@ -689,12 +875,18 @@ las030<- rbind(las30a, las30b, las30c)
 
 las030_cut<- las030 %>%
              filter(V2 < 1) %>% #V2 = spc
-             filter(V1 > 400) %>%
+               filter(V1 >= 300) %>%
+               filter(V1 <= 700) %>%
              mutate(
-               wavelength = V1,
-               intensity = V2,
+               wavelength = V1, 
+               abs = V2,
+               trans = 1/(10^abs), #tranmittance
                ave = mean(V2),
-               Pool_ID = "030")
+               Pool_ID = "030")%>%
+              group_by(replicate) %>%
+             mutate(max_trans = max(trans)) %>%
+             ungroup() %>%
+             mutate(ave_max_trans = mean(max_trans))
 
 ```
 
@@ -715,13 +907,15 @@ las_mega <- bind_rows(las001_cut, las002_cut, las003_cut, las004_cut, las005_cut
                    Replicate = as.factor(replicate),
                    Pool = forcats::fct_reorder(Pool_ID, -ave)) %>%
             group_by(Pool_ID) %>%
-            mutate(ranges = max(intensity)-min(intensity))%>%
+            mutate(ranges = max(abs)-min(abs))%>%
+            #filter(wavelength < 700.5) %>%
+            #filter(wavelength > 299) %>%
             ungroup()
   
 #for smaller more manageable dataset 
 las_unique <- las_mega %>%
               group_by(Pool_ID) %>%
-              distinct(Pool_ID, ranges, ave)
+              distinct(Pool_ID, ranges, abs, ave, ave_max_trans) # ave = mean wavelength
 
 ```
 
@@ -732,58 +926,119 @@ Here we aree going to steard breaking down spectral means and whatnot:
 #VALUE OF USING SPECTRAL MEANS
 train<- ggplot()+
   #geom_point() + 
-    geom_line(data = las017_cut, aes(x = wavelength, y = intensity, 
+    geom_line(data = las017_cut, aes(x = wavelength, y = trans, 
                                    color = replicate))+
-  geom_line(data =las017_cut, aes(x = wavelength, y = intensity, color = replicate, group = Pool_ID), color = "lightgrey", alpha = 0.3)+
-  geom_hline(yintercept = las017_cut$ave, linetype = "dashed")+
-  geom_text(color = "black", label = "LAS017 spectral mean- Turbid pool", 
-            check_overlap = T, size = 3, 
-            aes(x = 440, y = 0.6))+
-  geom_line(data = las027_cut, aes(x = wavelength, y = intensity, 
+  geom_line(data =las017_cut, aes(x = wavelength, y = trans, color = replicate, group = Pool_ID), color = "lightgrey", alpha = 0.3)+
+  geom_hline(yintercept = las017_cut$ave_max_trans, linetype = "dashed")+
+  geom_line(data = las027_cut, aes(x = wavelength, y = trans, 
                                    color = replicate))+
-  geom_line(data =las027_cut, aes(x = wavelength, y = intensity, color = replicate, group = Pool_ID), color = "lightgrey", alpha = 0.3)+
-  geom_hline(yintercept = las027_cut$ave, linetype = "dashed")+
-    geom_text(color = "black", label = "LAS027 spectral mean- Clear pool", 
-            check_overlap = T, size = 3, 
-            aes(x = 440, y = 0.07))+
-  ylab("Intensity (arbitrary units)")+
+  geom_line(data =las027_cut, aes(x = wavelength, y = trans, color = replicate, group = Pool_ID), color = "lightgrey", alpha = 0.3)+
+  geom_hline(yintercept = las027_cut$ave_max_trans, linetype = "dashed")+
+  ylab("Transmission")+
   scale_color_brewer(palette = "Paired")+
-  xlab(expression(Wavelength ~ Delta * tilde(nu)/cm^-1))+
-  coord_cartesian(ylim = c(0,1)) + 
-  theme(legend.position = "None")
+  xlab("Wavelength (nm)")+ #expression(Wavelength ~ Delta * tilde(nu)/cm^-1)
+  coord_cartesian(ylim = c(0,1.05), 
+                  xlim = c(315, 700))+  
+  theme(legend.position = "None", 
+         text = element_text(size = 16))
 
-ggsave("spectral_demo.png", plot = train, height = 7.36, width = 8.5)
+train
+
+ggsave("spectral_demo.png", plot = train, height = 7.36, width = 8.7)
 
 ```
+
+Let's compare spectral means to the full RGB space
+
+```{r RGB values and Spectral Means Example}
+
+ggplot()+
+  #geom_point() + 
+    geom_line(data = las024_cut, aes(x = wavelength, y = trans, 
+                                   color = replicate))+
+  geom_line(data =las024_cut, aes(x = wavelength, y = trans, color = replicate, group = Pool_ID), color = "lightgrey", alpha = 0.3)+  ylab("Transmittance (T)")+
+  scale_color_brewer(palette = "Paired")+
+  
+  #red. channel (reference)
+ geom_vline(xintercept = 650, color = "red")+
+    annotate(geom = "rect", 
+           xmin = 635, xmax = 665, 
+           ymin = -Inf, ymax = Inf, 
+           fill = "pink", 
+           alpha = 0.2)+
+    geom_point(aes(x = 650, y = 1), colour = "red", size = 3)+
+geom_richtext(aes(x = 650, y =0.3), color = "black", 
+              angle = 270,
+                label = "**Red: 1 (reference value)**
+                         % R-ch reflectance = 12.37", size = 4)+
+    
+  #green channel
+ geom_vline(xintercept = 550, color = "green")+
+  annotate(geom = "rect", 
+           xmin = 535, xmax = 565, 
+           ymin = -Inf, ymax = Inf, 
+           fill = "lightgreen", 
+           alpha = 0.2)+
+    geom_point(aes(x = 550, y = 0.79), colour = "darkgreen", size = 3)+
+
+  geom_richtext(aes(x = 550, y =0.3), color = "black", 
+              angle = 270,
+                label = "**Green: 0.79**
+                         % G-ch reflectance = 9.77", size = 4)+
+  
+  #blue channel
+ geom_vline(xintercept = 450, color = "blue")+
+      annotate(geom = "rect", 
+           xmin = 435, xmax = 465, 
+           ymin = -Inf, ymax = Inf, 
+           fill = "lightblue", 
+           alpha = 0.2)+
+    geom_richtext(aes(x = 450, y =0.3), color = "black", 
+              angle = 270,
+                label = "**Blue: 0.62**
+                         % B-ch reflectance = 7.75", size = 4)+
+      geom_text(color = "black", label = "Pool LAS024", 
+            check_overlap = T, size = 5,  
+            aes(x = 345, y = 1))+
+      geom_point(aes(x = 450, y = 0.62), colour = "blue", size = 3)+
+
+  xlab(expression(Wavelength ~ Delta * tilde(nu)/cm^-1))+
+  coord_cartesian(ylim = c(0,1), 
+                  xlim = c(315, 700))+  
+  theme(legend.position = "None", 
+         text = element_text(size = 16)) +
+  scale_y_continuous(sec.axis = sec_axis(trans = ~., name = "Proportion relative to R-ch reflectance"))
+
+?geom_richtext
+
+```
+
+
+
+
 
 ```{r Giant concate plots}
 #This one take about 30 seconds to load
 #There exists variation in the sampled pools, and spectra averages are a good summary of overall color capture of darker vs. lighter
 
-#### Facets coded in descending order from higherst to lowest average intensity
-ggplot(las_mega, aes(x = wavelength, y = intensity)) + 
-  #geom_point() + 
-  geom_line(aes(group = replicate))+
-  geom_hline(aes(yintercept = ave, color = Pool), 
-             linetype = "dashed", size = 1)+
-  facet_wrap(~ Pool) +
-  theme(legend.position = "None")
-
-
 ## Similar to graph above, but grouped by replicate.
-spec_div<- ggplot(las_mega, aes(x = wavelength, y = intensity)) + 
+spec_div<- 
+ggplot(las_mega, aes(x = wavelength, y = trans)) + 
   #geom_point() + 
   #geom_path()+
+  geom_line(aes(group = replicate))+
   geom_line(aes(group = Pool), color = "lightgrey", 
-            alpha = 0.3)+
-  geom_hline(aes(yintercept = ave, color = Pool), 
+            alpha = 0.7)+
+  geom_hline(aes(yintercept = ave_max_trans, color = Pool), 
              linetype = "dashed", size = 1)+
  # gghighlight(mean(intensity) > 0.75 | mean(intensity) < 0.15, 
              # use_direct_label = F, calculate_per_facet = T)+
   facet_wrap(~ Pool) +
   theme(legend.position = "None")+
-  ylab("Intensity (arbitrary units)")+
+  ylab("Transmission")+
   xlab(expression(Wavelength ~ Delta * tilde(nu)/cm^-1))
+
+spec_div
 
 ggsave("specdiv.png", plot = spec_div, height = 7, width = 12)
 
@@ -849,14 +1104,301 @@ cluster_meansd <- aggregate(faux_cell_preproc, faux_cell$region, mean_pm_sd)
 cluster_means <- aggregate(faux_cell_preproc, faux_cell$region, mean)
 ```
 
+
+Converting spectrophotometer spectra to RGB
+
+https://book.colrverse.com/importing-processing-and-visualising-data.html
+
+https://github.com/rmaia/pavo/tree/master/data_external/vignette
+
+https://rdrr.io/cran/pavo/man/spec2rgb.html
+
+https://stackoverflow.com/questions/3407942/rgb-values-of-visible-spectrum
+
+```{r Pavo Script}
+getwd()
+
+library(pavo)
+
+#### #### ####
+#preparing df for pavo analysis
+#### #### ####
+
+#exception for las001 and las002
+las001_300_700<- las001 %>%
+     filter(V1 >= 300) %>%
+     filter(V1 <= 700) %>%
+             mutate(
+               wavelength = V1, 
+               abs = V2,
+               trans = 1/(10^abs), #transmittance
+               ave = mean(V2),  
+               Pool_ID = "001") %>%
+              group_by(replicate) %>%
+             mutate(max_trans = max(trans)) %>%
+             ungroup() %>%
+             mutate(ave_max_trans = mean(max_trans))
+
+las001_pavo <- las001_300_700 %>%
+               mutate(refl= trans *100) %>%
+               select(wavelength, refl) %>%
+               rename(wl = wavelength)
+
+write.csv(las001_pavo , file="/Users/chloefouilloux/Desktop/spc_test/ex/las001_pavo.csv",
+          row.names=FALSE)
+
+las002_300_700<- las002 %>%
+     filter(V1 >= 300) %>%
+     filter(V1 <= 700) %>%
+             mutate(
+               wavelength = V1, 
+               abs = V2,
+               trans = 1/(10^abs), #transmittance
+               ave = mean(V2),  
+               Pool_ID = "002") %>%
+              group_by(replicate) %>%
+             mutate(max_trans = max(trans)) %>%
+             ungroup() %>%
+             mutate(ave_max_trans = mean(max_trans))
+
+las002_pavo <- las002_300_700 %>%
+               mutate(refl= trans *100) %>%
+               select(wavelength, refl) %>%
+               rename(wl = wavelength)
+
+write.csv(las002_pavo , file="/Users/chloefouilloux/Desktop/spc_test/ex/las002_pavo.csv",
+          row.names=FALSE)
+
+
+las005_pavo <- las005_cut %>%
+               mutate(refl= trans *100) %>%
+               select(wavelength, refl) %>%
+               rename(wl = wavelength)
+
+write.csv(las005_pavo , file="/Users/chloefouilloux/Desktop/spc_test/las005_pavo.csv",
+          row.names=FALSE)
+
+las006_pavo <- las006_cut %>%
+               mutate(refl= trans *100) %>%
+               select(wavelength, refl) %>%
+               rename(wl = wavelength)
+
+write.csv(las006_pavo , file="/Users/chloefouilloux/Desktop/spc_test/las006_pavo.csv",
+          row.names=FALSE)
+
+las007_pavo <- las007_cut %>%
+               mutate(refl= trans *100) %>%
+               select(wavelength, refl) %>%
+               rename(wl = wavelength)
+
+write.csv(las007_pavo , file="/Users/chloefouilloux/Desktop/spc_test/las007_pavo.csv",
+          row.names=FALSE)
+
+las008_pavo <- las008_cut %>%
+               mutate(refl= trans *100) %>%
+               select(wavelength, refl) %>%
+               rename(wl = wavelength)
+
+write.csv(las008_pavo , file="/Users/chloefouilloux/Desktop/spc_test/las008_pavo.csv",
+          row.names=FALSE)
+
+las009_pavo <- las009_cut %>%
+               mutate(refl= trans *100) %>%
+               select(wavelength, refl) %>%
+               rename(wl = wavelength)
+
+write.csv(las009_pavo , file="/Users/chloefouilloux/Desktop/spc_test/las009_pavo.csv",
+          row.names=FALSE)
+
+las010_pavo <- las010_cut %>%
+               mutate(refl= trans *100) %>%
+               select(wavelength, refl) %>%
+               rename(wl = wavelength)
+
+write.csv(las010_pavo , file="/Users/chloefouilloux/Desktop/spc_test/las010_pavo.csv",
+          row.names=FALSE)
+
+las013_pavo <- las013_cut %>%
+               mutate(refl= trans *100) %>%
+               select(wavelength, refl) %>%
+               rename(wl = wavelength)
+
+write.csv(las013_pavo , file="/Users/chloefouilloux/Desktop/spc_test/las013_pavo.csv",
+          row.names=FALSE)
+
+las014_pavo <- las014_cut %>%
+               mutate(refl= trans *100) %>%
+               select(wavelength, refl) %>%
+               rename(wl = wavelength)
+
+write.csv(las014_pavo , file="/Users/chloefouilloux/Desktop/spc_test/las014_pavo.csv",
+          row.names=FALSE)
+
+las015_pavo <- las015_cut %>%
+               mutate(refl= trans *100) %>%
+               select(wavelength, refl) %>%
+               rename(wl = wavelength)
+
+write.csv(las015_pavo , file="/Users/chloefouilloux/Desktop/spc_test/las015_pavo.csv",
+          row.names=FALSE)
+
+las016_pavo <- las016_cut %>%
+               mutate(refl= trans *100) %>%
+               select(wavelength, refl) %>%
+               rename(wl = wavelength)
+
+write.csv(las016_pavo , file="/Users/chloefouilloux/Desktop/spc_test/las016_pavo.csv",
+          row.names=FALSE)
+
+las017_pavo <- las017_cut %>%
+               mutate(refl= trans *100) %>%
+               select(wavelength, refl) %>%
+               rename(wl = wavelength)
+
+write.csv(las017_pavo , file="/Users/chloefouilloux/Desktop/spc_test/las017_pavo.csv",
+          row.names=FALSE)
+
+las018_pavo <- las018_cut %>%
+               mutate(refl= trans *100) %>%
+               select(wavelength, refl) %>%
+               rename(wl = wavelength)
+
+write.csv(las018_pavo , file="/Users/chloefouilloux/Desktop/spc_test/las018_pavo.csv",
+          row.names=FALSE)
+
+las019_pavo <- las019_cut %>%
+               mutate(refl= trans *100) %>%
+               select(wavelength, refl) %>%
+               rename(wl = wavelength)
+
+write.csv(las019_pavo , file="/Users/chloefouilloux/Desktop/spc_test/las019_pavo.csv",
+          row.names=FALSE)
+
+las020_pavo <- las020_cut %>%
+               mutate(refl= trans *100) %>%
+               select(wavelength, refl) %>%
+               rename(wl = wavelength)
+
+write.csv(las020_pavo , file="/Users/chloefouilloux/Desktop/spc_test/las020_pavo.csv",
+          row.names=FALSE)
+
+las021_pavo <- las021_cut %>%
+               mutate(refl= trans *100) %>%
+               select(wavelength, refl) %>%
+               rename(wl = wavelength)
+
+write.csv(las021_pavo , file="/Users/chloefouilloux/Desktop/spc_test/las021_pavo.csv",
+          row.names=FALSE)
+
+las022_pavo <- las022_cut %>%
+               mutate(refl= trans *100) %>%
+               select(wavelength, refl) %>%
+               rename(wl = wavelength)
+
+write.csv(las022_pavo , file="/Users/chloefouilloux/Desktop/spc_test/las022_pavo.csv",
+          row.names=FALSE)
+
+
+las023_pavo <- las023_cut %>%
+               mutate(refl= trans *100) %>%
+               select(wavelength, refl) %>%
+               rename(wl = wavelength)
+
+write.csv(las023_pavo , file="/Users/chloefouilloux/Desktop/spc_test/las023_pavo.csv",
+          row.names=FALSE)
+
+las024_pavo <- las024_cut %>%
+               mutate(refl= trans *100) %>%
+               select(wavelength, refl) %>%
+               rename(wl = wavelength)
+
+write.csv(las024_pavo , file="/Users/chloefouilloux/Desktop/spc_test/las024_pavo.csv",
+          row.names=FALSE)
+
+las025_pavo <- las025_cut %>%
+               mutate(refl= trans *100) %>%
+               select(wavelength, refl) %>%
+               rename(wl = wavelength)
+
+write.csv(las025_pavo , file="/Users/chloefouilloux/Desktop/spc_test/las025_pavo.csv",
+          row.names=FALSE)
+
+las026_pavo <- las026_cut %>%
+               mutate(refl= trans *100) %>%
+               select(wavelength, refl) %>%
+               rename(wl = wavelength)
+
+write.csv(las026_pavo , file="/Users/chloefouilloux/Desktop/spc_test/las026_pavo.csv",
+          row.names=FALSE)
+
+las027_pavo <- las027_cut %>%
+               mutate(refl= trans *100) %>%
+               select(wavelength, refl) %>%
+               rename(wl = wavelength)
+
+write.csv(las027_pavo , file="/Users/chloefouilloux/Desktop/spc_test/las027_pavo.csv",
+          row.names=FALSE)
+
+las028_pavo <- las028_cut %>%
+               mutate(refl= trans *100) %>%
+               select(wavelength, refl) %>%
+               rename(wl = wavelength)
+
+write.csv(las028_pavo , file="/Users/chloefouilloux/Desktop/spc_test/las028_pavo.csv",
+          row.names=FALSE)
+
+las029_pavo <- las029_cut %>%
+               mutate(refl= trans *100) %>%
+               select(wavelength, refl) %>%
+               rename(wl = wavelength)
+
+write.csv(las029_pavo , file="/Users/chloefouilloux/Desktop/spc_test/las029_pavo.csv",
+          row.names=FALSE)
+
+las030_pavo <- las030_cut %>%
+               mutate(refl= trans *100) %>%
+               select(wavelength, refl) %>%
+               rename(wl = wavelength)
+
+write.csv(las030_pavo , file="/Users/chloefouilloux/Desktop/spc_test/las030_pavo.csv",
+          row.names=FALSE)
+
+specs <- getspec("/Users/chloefouilloux/Desktop/spc_test",
+  ext = "csv",
+  sep = ",",
+  subdir = TRUE,
+  subdir.names = FALSE) #these are correctly loaded, but not the correct value is taken here.
+
+explorespec(specs[, 1:3]) #this looks at %reflectance and not absorption
+spec2rgb(specs, alpha = 1)
+
+```
+las005_pavo las006_pavo las007_pavo las008_pavo las009_pavo las010_pavo las013_pavo las014_pavo las015_pavo 
+"#AA9179FF" "#FFDAC4FF" "#ECC8B6FF" "#E5C4AAFF" "#F3CCB5FF" "#B6A48EFF" "#F3D2BFFF" "#FFE2CDFF" "#DABDA5FF" 
+las016_pavo las017_pavo las018_pavo las019_pavo las020_pavo las021_pavo las022_pavo las023_pavo las024_pavo 
+"#B99F8FFF" "#AB8F7EFF" "#EECCB9FF" "#F9D6BFFF" "#C5AC9EFF" "#FFE1D3FF" "#856D5FFF" "#CCAF9CFF" "#E9C9BEFF" 
+las025_pavo las026_pavo las027_pavo las028_pavo las029_pavo las030_pavo   test1.spc 
+"#D4B39DFF" "#FFF7E4FF" "#FFEFDFFF" "#75675FFF" "#FFE6D7FF" "#DBBDAAFF" "#0A0E06FF" 
+
+# Delete, not used in final script.
 Removing Spectra outside mean ± n sd
 
 ```{r}
-> mean_sd_filter <- function (x, n = 5) {
-+ x <- x - mean (x)
-+ s <- n * sd (x)
-+ (x <= s) & (x > -s)
-+ }
-> OK <- apply (chondro [[]], 2, mean_sd_filter, n = 4) # logical matrix
-> spc.OK <- chondro [apply (OK, 1, all)]
+ mean_sd_filter <- function (x, n = 5) {
+x <- x - mean (x)
+s <- n * sd (x)
+(x <= s) & (x > -s)
+ }
+
+OK <- apply (chondro [[]], 2, mean_sd_filter, n = 4) # logical matrix
+ spc.OK <- chondro [apply (OK, 1, all)]
 ```
+
+
+
+
+
+
+
+
+
