@@ -25,6 +25,8 @@ library(DHARMa)
 library(lme4)
 library(MASS)
 library(sjPlot)
+library(AICcmodavg)
+library(corrplot)
 
 ```
 
@@ -44,7 +46,7 @@ Now, let's load some data
 
 ```{r Data Wrangling}
 
-las<- read_csv("LAS_VISION_OCT2022.csv")
+las<- read_csv("LAS_VISION_FEB2023_3.csv")
 
 las <- las %>%
        mutate(Trial = as.factor(Trial),
@@ -57,10 +59,17 @@ activity <- las %>%
            dplyr::select(! c("White", "Black")) %>%
            mutate(mass_diff_cons = Mass - Cons_g, 
                   pr_z1 = Zone_1/60, 
-                  pr_swim = Swim/60)
+                  pr_swim = Swim/60) %>%
+        #normalizing RGB values to Rchannel, (x - xmin)/(xmax-xmin) --> xmin = 0, xmax = Rchannel
+            mutate(rch_norm = rMean_OG/rMean_OG, 
+                   gch_norm = gMean_OG/rMean_OG,
+                   bch_norm = bMean_OG/rMean_OG)
 
 activity$Predator<- forcats::fct_relevel(activity$Predator, 
                     c("Control", "Spider", "Conspecific"))
+
+activity$Condition<- forcats::fct_relevel(activity$Condition, 
+                    c("White", "Black"))
 
 #Lets also look for black and white background trial
 #background choice data
@@ -71,112 +80,272 @@ bw_choice_las <- las %>%
 
 ```
 
+
+################################### 
+
+#### PCA
+
+################################### 
+
+
+So, here's the deal. Color is based in a RGB colour space, and it would be cool to be able to summarize these values into a single representative number. I thought that a PCA could be a cool way solve this issue, so let's give it a go!
+
+```{r PCA for RGB colorspace.}
+################
+#Tidy Data PHOTOS----
+###############
+#PCA must be numeric so let's just subset the numeric variables.
+
+numfrog <- las %>%
+           dplyr::select(Tad_ID, rMean_OG, gMean_OG, bMean_OG)
+
+#just numeric
+random_frog<- las %>%
+          dplyr::select(rMean_OG, gMean_OG, bMean_OG)
+
+######## ######## ######## ########
+# PCA MODEL PHOTOS ----
+######## ######## ######## ########
+#first we have to get all this data together
+#remember our observation based PCA obs_PCA
+dataset_obj = random_frog
+obs_PCA = prcomp(dataset_obj,scale=T, center = T)
+summary(obs_PCA)
+axes <- predict(obs_PCA, newdata = random_frog) #
+head(axes, 4)
+
+PC_load<- as.data.frame(obs_PCA$rotation[,1:3]) #this is just loading for each variable, predict is better
+
+dat <- cbind(numfrog, axes)
+
+dat1<- dat %>%
+      group_by(Tad_ID) %>%
+      summarise(m_PC1 = max(PC1)) %>%
+      mutate(Tad_ID = forcats::fct_reorder(Tad_ID, m_PC1))
+
+dat2<- dplyr::full_join(activity, dat1, by = "Tad_ID") #nice
+
+dat2$Condition<- forcats::fct_relevel(dat2$Condition, 
+                    c("Black", "White"))
+
+
+#NOW LET'S DO A PCA FOR THE SPECTROPHOTOMETER RGB VALUES! 
+
+################
+#Tidy Data SPECTROPHOTOMETER ----
+###############
+#PCA must be numeric so let's just subset the numeric variables.
+
+numfrog1 <- las %>%
+           dplyr::select(Tad_ID, R_spec, G_spec, B_Spec)
+
+#just numeric
+random_frog1<- las %>%
+          dplyr::select(R_spec, G_spec, B_Spec)
+
+######## ######## ######## ########
+# PCA MODELS SPECTROPHOTOMETER----
+######## ######## ######## ########
+#first we have to get all this data together
+#remember our observation based PCA obs_PCA
+dataset_obj1 = random_frog1
+obs_PCA1 = prcomp(dataset_obj1,scale=T, center = T)
+summary(obs_PCA1)
+axes1 <- predict(obs_PCA1, newdata = random_frog1) #
+head(axes1, 4)
+
+PC_load1<- as.data.frame(obs_PCA1$rotation[,1:3]) #this is just loading for each variable, predict is better
+
+dat3 <- cbind(numfrog1, axes1)
+
+dat4<- dat3 %>%
+      group_by(Tad_ID) %>%
+      summarise(m_PC1_spec = max(PC1)) %>%
+      mutate(Tad_ID = forcats::fct_reorder(Tad_ID, m_PC1_spec))
+
+#joining the photodata with the spectrophotometer data
+dat4.1<- dplyr::full_join(dat1, dat4, by = "Tad_ID")
+
+#joining the two pca components to the full data sheet
+dat2<- dplyr::full_join(activity, dat4.1, by = "Tad_ID") #nice
+
+dat2$Condition<- forcats::fct_relevel(dat2$Condition, 
+                    c("Black", "White"))
+
+#relationship between spectrophotometry and photography RGB values
+#monotonic increase
+ggplot(dat2, aes(y= m_PC1, x= m_PC1_spec, fill = m_PC1_spec))+
+  geom_point(size = 3, shape = 21) + 
+  xlab("PC1 component from spectrophotometer RGB values") +
+  ylab("PC1 component from photography RGB values")+
+  stat_smooth(method = "gam", 
+              formula = y ~ poly(x, 2), 
+              colour = "black") + 
+  stat_smooth(method = "gam", 
+              geom = "ribbon", 
+              linetype = "dashed",
+              formula = y ~ poly(x,2), 
+              colour = "black", 
+              fill = NA) +
+  scale_fill_gradient(high = "white", low = "#5c1f27") +
+  theme(legend.position = "None")
+
+
+#Correlation between two PC components
+
+dat4.1_num <- dat4.1 %>%
+              dplyr::select(m_PC1, m_PC1_spec)
+
+#here alternative hypothesis is greater, as I would assume a positive relationship between the two variables.
+cor.test(dat4.1_num$m_PC1, dat4.1_num$m_PC1_spec, 
+         alternative = "greater", method = "pearson")
+
+#broadening the relationship to include monotonic dynamic here might is a good option
+cor.test(dat4.1_num$m_PC1, dat4.1_num$m_PC1_spec, 
+        method = "spearman", exact = F)
+
+
+## Adding to dat2 for plotting purposes
+
+dat2 <- dat2 %>%
+        mutate(dark_light = ifelse(m_PC1 <= 0.5, "Turbid microhabitat", "Clear microhabitat"))
+
+mean_pred <- dat2 %>%
+            group_by(Condition, dark_light, Predator)%>%
+            summarise(mean_swim = mean(pr_swim), 
+                      med_swim = median(pr_swim)) %>%
+            drop_na()
+
+```
+
 ################################### 
 
 #### Statistics
 
 ################################### 
 
+
+** Now, for *O. pumilio* data we also have photograph data that we can compare with spectrophotometer data. Let's run the exact same model formulation with using photography and spectrophotometry data. **
+
+Below we will be looking at models parameterized with (1) mean maximum transmittance values from full spectra measured from spectrophotometer and (2) also the PC1 (from PCA above) for photos of the same pools. If these models have the same output, then this provides us with more evidence to support the fact that these two measures provide very similar quantifications of pool turbidity! :-) 
+
 # Space use (Zone 1)
 
-```{r Zone 1 counts by tadpoles with spectrophotometer data}
+```{r Zone 1 counts by tadpoles with Transmittance or PC1}
 
+### Let's start with the tranmsmittance data ###
 
-op_zone1_m1_full<- glmmTMB(Zone_1 ~ Condition * Predator * (Mean_Wave) + 
+#full model
+z1_trans<- glmmTMB(Zone_1 ~ Condition * Predator * (Mean_Trans) + 
                 (Mass)+
                (1|Tad_ID), 
               data = activity, family = nbinom1) 
 
-summary(op_zone1_m1_full) #weak 3 way interaction ( p = 0.0519)
-#How does the full model look with respect to residuals?
-simulationOutput <- simulateResiduals(fittedModel = op_zone1_m1_full)
+summary(z1_trans) #3 way interactoin 0.052
+simulationOutput <- simulateResiduals(fittedModel = z1_trans)
 plot(simulationOutput)
 
-#Check three way interaction removed
-step(op_zone1_m1_full)
-
-
-####
-# Trying different interaction structures#
-####
+#Check three way interaction removed let's play around with the interactions
 
 #Condition * Predator
-m2a<- glmmTMB(Zone_1 ~ 
-                Condition * Predator + Mean_Wave + 
-                Mass+
+z1_trans1<- glmmTMB(Zone_1 ~ Condition * Predator + (Mean_Trans) + 
+                (Mass)+
+               (1|Tad_ID), 
+              data = activity, family = nbinom1) 
+summary(z1_trans1)
+
+#Predator * (Mean_Trans)
+z1_trans2<- glmmTMB(Zone_1 ~ Condition + Predator * (Mean_Trans) + 
+                (Mass)+
                (1|Tad_ID), 
               data = activity, family = nbinom1) 
 
-#Predator * Mean_Wave
-m2b<- glmmTMB(Zone_1 ~ 
-                Condition + Predator * Mean_Wave + 
-                Mass+
+#Condition* (Mean_Trans)
+z1_trans3<- glmmTMB(Zone_1 ~ Condition  * (Mean_Trans) + Predator +
+                (Mass)+
                (1|Tad_ID), 
               data = activity, family = nbinom1) 
 
-#Condition * Mean_Wave
-m2c<- glmmTMB(Zone_1 ~ 
-                Condition * Mean_Wave  + Predator + 
-                Mass+
+
+#Condition + Predator
+z1_trans4<- glmmTMB(Zone_1 ~ Condition + Predator + (Mean_Trans) + 
+                (Mass)+
                (1|Tad_ID), 
               data = activity, family = nbinom1) 
 
-#Additive model
-m2d<- glmmTMB(Zone_1 ~ 
-                Condition + Mean_Wave  + Predator + 
-                Mass+
-               (1|Tad_ID), 
-              data = activity, family = nbinom1) 
 
 
 #Let's compare model fits via AICc
-aic.cand<- list(m2a, m2b, m2c, m2d)
-mods<- c("m2a", "m2b", "m2c", "m2d")
+aic.cand<- list(z1_trans1, z1_trans2, z1_trans3, z1_trans4)
+mods<- c("z1_trans1", "z1_trans2", "z1_trans3", "z1_trans4")
 aictab(aic.cand, mods, sort = T, second.ord = T)
 
+#additive model wins
+#interaction ns in z1_trans3
+summary(z1_trans4)
+
+####################
+#what about with PC1
+####################
+
+z1_pc1<- glmmTMB(Zone_1 ~ Condition * Predator * m_PC1 + 
+                (Mass)+
+               (1|Tad_ID), 
+              data = dat2, family = nbinom1) 
+
+#Condition * Predator 
+z1_pc1_2<- glmmTMB(Zone_1 ~ Condition * Predator + m_PC1 + 
+                (Mass)+
+               (1|Tad_ID), 
+              data = dat2, family = nbinom1) 
+
+
+#Predator * m_PC1
+z1_pc1_3<- glmmTMB(Zone_1 ~ Condition + Predator * m_PC1 + 
+                (Mass)+
+               (1|Tad_ID), 
+              data = dat2, family = nbinom1) 
+
+#Predator * m_PC1
+z1_pc1_4<- glmmTMB(Zone_1 ~ Condition  * (m_PC1) + Predator +
+                (Mass)+
+               (1|Tad_ID), 
+              data = dat2, family = nbinom1) 
+
+
+z1_pc1_5<- glmmTMB(Zone_1 ~ Condition + Predator + m_PC1 + 
+                (Mass)+
+               (1|Tad_ID), 
+              data = dat2, family = nbinom1) 
+
+summary(z1_pc1_5) 
+
+#Let's compare model fits via AICc
+aic.cand<- list(z1_pc1_2, z1_pc1_3, z1_pc1_4, z1_pc1_5)
+mods<- c("z1_pc1_2", "z1_pc1_3", "z1_pc1_4", "z1_pc1_5")
+aictab(aic.cand, mods, sort = T, second.ord = T)
+
+#additive model wins, same as spectrophotometer data!!! 
+summary(z1_pc1_5)
+
 ```
 
-Here we have models m2d and m2c that are within 1 AIC of each other, but since the interaction in m2c is not significant, let's drop it and just work with m2d.
 
-```{r Zone 1 Checks and Table}
+```{r Zone 1 DHARMA Checks}
 
 #Let's check the model fit and residuals using DHARMa
-summary(m2d)
+summary(z1_pc1_4)
+summary(z1_trans4)
 
 #run both lines at the same time
-simulationOutput <- simulateResiduals(fittedModel = m2d) #no problems detected
+simulationOutput <- simulateResiduals(fittedModel = z1_pc1_5) #no problems detected
 plot(simulationOutput)
 #
-testDispersion(m2d) #fine
-testZeroInflation(m2d) #good
-
-```
-
-(1) Now, for O. pumilio data we also have photograph data that we can compare with spectrophotometer data. Let's run the exact same model formulation with using photography instead of spectrophotometry data.
-
-(2) Alright, there are two main ways to think about the tadpole size in this study. The first is to think about the absolute size of the focal tadpole (in grams) and the other is to think about the weight difference between the tadpole and the visual stimuli when faced with conspecifics. Here, I show that the model output does not change as a fuction of using one variable or the other. Ultimately, the size of the focal tadpole seems to be the most important predictive factor rather than relative size between tadpoles.
-
-```{r Spectrophotometry/Photograph data + Absolute/Relative Mass for Zone 1}
-
-############################
-##### %R Channel Reflectance #####
-############################ 
-
-#best model for zone 1 was m2d, which found only background condition **White** to be significant.
-#let's run this with the %R channel data
-
-m2_rMean<- glmmTMB(Zone_1 ~ 
-                Condition + log(rMean_OG)  + Predator + 
-                log(Mass)+
-               (1|Tad_ID), 
-              data = activity, family = nbinom1) 
-
-summary(m2_rMean) #same result!
-simulationOutput <- simulateResiduals(fittedModel = m2_rMean)
-plot(simulationOutput)
+testDispersion(z1_pc1_4) #fine
+testZeroInflation(z1_pc1_4) #good
 
 #tab model for photography data
-tab_model(m2_rMean, 
+tab_model(z1_pc1_5, 
           transform = NULL,
           show.ci = F, 
           show.est = T, 
@@ -186,50 +355,38 @@ tab_model(m2_rMean,
           show.r2 = F,
           string.stat = "z value",
           string.se = "SE", 
-          dv.labels = "<i>O. pumilio</i> Space-use (zone 1 counts)",
+          dv.labels = "<i>O. pumilio</i> space use (zone 1 counts)",
           pred.labels = c("(Intercept)",
                          "Condition [White]",
-                         "log(% R-ch reflectance)",
                         "Predator [Spider]",
                          "Predator [Cons.]", 
+                         "PC1",
                          "Mass"))
 
 
-
-############################
-##### Absolute vs. Relative Tadpole Size #####
-############################ 
-
-#best model for zone 1 was m2d, which found only background condition **White** to be significant.
-#let's run this with mass difference data
-
-m2d.md<- glmmTMB(Zone_1 ~ 
-                Condition + Mean_Wave  + Predator + 
-                mass_diff_cons+(1|Tad_ID), data = activity, family = nbinom1) 
-
-summary(m2d.md)
-simulationOutput <- simulateResiduals(fittedModel = m2d.md)
-plot(simulationOutput)
-
-#same result!
-
 ```
+
+(2) Alright, there are two main ways to think about the tadpole size in this study. The first is to think about the absolute size of the focal tadpole (in grams) and the other is to think about the weight difference between the tadpole and the visual stimuli when faced with conspecifics. Here, I show that the model output does not change as a fuction of using one variable or the other. Ultimately, the size of the focal tadpole seems to be the most important predictive factor rather than relative size between tadpoles.
+
+
+What about using Transmittance and our PC1 component?
+Transmittance is just a conversion of absoption T = (1-Abs)
+
+
+# ACTIVITY (SWIMMING)
 
 Great! Now let's move on to activity!
 
-# Activity (swimming)
 
 As with the previous formulation, we will start with a full model interaction
 
-```{r Swimming Activity Models with Spectrophotometry data}
+```{r Swimming Activity Models }
 
 op_swim_m1_full<- glmmTMB(Swim ~ 
-                Condition * Predator * (Mean_Wave) + 
+                Condition * Predator * (Mean_Trans) + 
                 (Mass)+
                (1|Tad_ID), 
-              data = activity, family = nbinom1) 
-
-
+              data = dat2, family = nbinom1) 
 
 summary(op_swim_m1_full) 
 
@@ -242,32 +399,32 @@ step(op_swim_m1_full)
 
 #Condition * Predator
 m3a<- glmmTMB(Swim ~ 
-                Condition * Predator + Mean_Wave + 
+                Condition * Predator + Mean_Trans + 
                 (Mass)+
                (1|Tad_ID), 
-              data = activity, family = nbinom1) 
+              data = dat2, family = nbinom1) 
 
 
 #Predator * Mean_Wave
 m3b<- glmmTMB(Swim ~ 
-                Condition + Predator * Mean_Wave + 
+                Condition + Predator * Mean_Trans + 
                 (Mass)+
                (1|Tad_ID), 
-              data = activity, family = nbinom1) 
+              data = dat2, family = nbinom1) 
 
 #Condition * Mean_Wave
 m3c<- glmmTMB(Swim ~ 
-                Condition * Mean_Wave +  Predator +
+                Condition * Mean_Trans +  Predator +
                 (Mass)+
                (1|Tad_ID), 
-              data = activity, family = nbinom1) 
+              data = dat2, family = nbinom1) 
 
 #Additive model
 m3d<- glmmTMB(Swim ~ 
-                Condition + Mean_Wave +  Predator +
+                Condition + Mean_Trans +  Predator +
                 (Mass)+
                (1|Tad_ID), 
-              data = activity, family = nbinom1) 
+              data = dat2, family = nbinom1) 
 
 
 #Let's compare model fits via AICc
@@ -277,48 +434,64 @@ aictab(aic.cand, mods, sort = T, second.ord = T)
 
 #m3c, by a lot!
 
-```
+##### ##### 
+## PC1 ##
+#######  ##### 
 
-Now let's check the quality of m3c
-
-```{r Swimming Checks}
-
-#Let's check the model fit and residuals using DHARMa
-summary(m3c)
-
-#run both lines at the same time
-simulationOutput <- simulateResiduals(fittedModel = m3c) #no problems detected
-plot(simulationOutput)
-#
-testDispersion(m3c) #fine
-testZeroInflation(m3c) #good
-
-```
-
-Let's look at these data from the photography perspective
-
-```{r Spectrophotometry and Photograph data for Swim}
-
-############################
-  ##### r MEAN OG #####
-############################ 
-
-#best model for zone 1 was m3c, which found (1) interaction between background*intensity, (2) tadpole mass, and (3) background w/out interaction
-
-#let's run this with the %R channel data
-
-m3c_rMean<- glmmTMB(Swim ~ 
-                Condition * log(rMean_OG) + Predator +
+op_swim_m1_pho<- glmmTMB(Swim ~ 
+                Condition * Predator * m_PC1 + 
                 (Mass)+
                (1|Tad_ID), 
-              data = activity, family = nbinom1) 
+              data = dat2, family = nbinom1) 
 
-summary(m3c_rMean) #same result!
-simulationOutput <- simulateResiduals(fittedModel = m3c_rMean)
-plot(simulationOutput)
+summary(op_swim_m1_pho) 
+
+#Check three way interaction removed
+step(op_swim_m1_pho)
+
+####
+# Trying different interaction structures#
+####
+
+#Condition * Predator
+m3a_pc1<- glmmTMB(Swim ~ 
+                Condition * Predator + m_PC1 + 
+                (Mass)+
+               (1|Tad_ID), 
+              data = dat2, family = nbinom1) 
+
+
+#Predator * PC1
+m3b_pc1<- glmmTMB(Swim ~ 
+                Condition + Predator * m_PC1 + 
+                (Mass)+
+               (1|Tad_ID), 
+              data = dat2, family = nbinom1) 
+
+#Condition * m_PC1
+m3c_pc1<- glmmTMB(Swim ~ 
+                Condition * m_PC1+  Predator +
+                (Mass)+
+               (1|Tad_ID), 
+              data = dat2, family = nbinom1) 
+
+#Additive model
+m3d_pc1<- glmmTMB(Swim ~ 
+                Condition + Predator +  m_PC1 +
+                (Mass)+
+               (1|Tad_ID), 
+              data = dat2, family = nbinom1) 
+
+
+#Let's compare model fits via AICc
+aic.cand<- list(m3a_pc1, m3b_pc1, m3c_pc1, m3d_pc1)
+mods<- c("m3a_pc1", "m3b_pc1", "m3c_pc1", "m3d_pc1")
+aictab(aic.cand, mods, sort = T, second.ord = T)
+
+summary(m3c_pc1)
 
 #tab model for photography data
-tab_model(m3OG, 
+tab_model(m3c_pc1, 
           transform = NULL,
           show.ci = F, 
           show.est = T, 
@@ -328,35 +501,120 @@ tab_model(m3OG,
           show.r2 = F,
           string.stat = "z value",
           string.se = "SE", 
-          dv.labels = "<i>O. pumilio</i> Activity (swim counts)",
+          dv.labels = "<i>O. pumilio</i> activity (swim counts)",
           pred.labels = c("(Intercept)",
                          "Condition [White]",
-                         "log(% R-ch reflectance)", 
+                         "PC1", 
                          "Predator [Spider]",
                          "Predator [Cons.]", 
                          "Mass", 
-                         "Condition [White]: log(% R-ch reflectance)"))
+                         "Condition [White]: PC1"))
+
+
+```
+
+Now let's check the quality of m3c
+
+```{r Swimming Checks DHARMA}
+
+#Let's check the model fit and residuals using DHARMa
+summary(m3c_pc1)
+
+#run both lines at the same time
+simulationOutput <- simulateResiduals(fittedModel = m3c_pc1) #no problems detected
+plot(simulationOutput)
+#
+testDispersion(m3c_pc1) #fine
+testZeroInflation(m3c_pc1) #good
+
+
+#For fun, let's reshuffle the levels so we have white as the intercept and rerun the model. Remember, as a base our model intercept is "black, control". If we relevel our model than we can have everything compared to the "white, control".
+levels(dat2$Condition)
+
+dat2$Condition<- forcats::fct_relevel(dat2$Condition, 
+                    c( "White", "Black"))
+
+#Condition * m_PC1
+m3c_pc1<- glmmTMB(Swim ~ 
+                Condition * m_PC1+  Predator +
+                (Mass)+
+               (1|Tad_ID), 
+              data = dat2, family = nbinom1) 
+
+summary(m3c_pc1)
+
+```
+
+
+```{r Comapring Model Outputs}
+
+##################################### ######### ######### 
+##### Mean Max. Trans vesus PC1 for Zone1 + Swim #####
+############################ ######### ######### ######### 
+#Let's check the model fit and residuals using DHARMa
+summary(z1_pc1_5) #zone 1 using PC1
+summary(z1_trans4) #zone 1 using transmission data 
+
+#Let's compare model fits via AICc
+aic.cand<- list(z1_pc1_5, z1_trans4)
+mods<- c("z1_pc1_5", "z1_trans4")
+aictab(aic.cand, mods, sort = T, second.ord = T)
+
+#Let's check the model fit and residuals using DHARMa
+summary(m3c) #swim using trans
+summary(m3c_pc1) #swim using pc1
+
+#Let's compare model fits via AICc
+aic.cand<- list(m3c, m3c_pc1)
+mods<- c("m3c", "m3c_pc1")
+aictab(aic.cand, mods, sort = T, second.ord = T)
 
 ############################
 ##### Absolute vs. Relative Tadpole Size #####
 ############################ 
 
-#best model for zone 1 was m3c, which found (1) interaction between background*intensity, (2) tadpole mass, and (3) background w/out interaction
+#best model for zone 1 was z1_trans4, ADDITIVE MODEL
 
-#let's run this with mass difference data
+summary(z1_trans4)
 
-m3d.md <- glmmTMB(Swim ~ 
-                Condition * Mean_Wave + Predator + 
+#let's run this with mass difference data for ZONE1
+z1_trans4.md <- glmmTMB(Zone_1 ~ 
+                Condition + Mean_Trans + Predator + 
                 mass_diff_cons+ (1|Tad_ID), 
-              data = activity, family = nbinom1) 
-summary(m3d.md)
-simulationOutput <- simulateResiduals(fittedModel = m3d.md)
+                data = dat2, family = nbinom1) 
+
+summary(z1_trans4.md)
+simulationOutput <- simulateResiduals(fittedModel = z1_trans4.md)
 plot(simulationOutput)
 
+#Let's compare model fits via AICc
+aic.cand<- list(z1_trans4, z1_trans4.md)
+mods<- c("z1_trans4", "z1_trans4.md")
+aictab(aic.cand, mods, sort = T, second.ord = T)
+
+#######################################################
+
+summary(m3c)
+
+#let's run this with mass difference data for SWIM
+m3c.md <- glmmTMB(Swim ~ 
+                Condition * Mean_Trans + Predator + 
+                mass_diff_cons+ (1|Tad_ID), 
+              data = dat2, family = nbinom1) 
+
+summary(m3c.md)
+simulationOutput <- simulateResiduals(fittedModel = m3c.md)
+plot(simulationOutput)
+
+#Let's compare model fits via AICc
+aic.cand<- list(m3c, m3c.md)
+mods<- c("m3c", "m3c.md")
+aictab(aic.cand, mods, sort = T, second.ord = T)
 
 ```
 
 Well that sure was fun. In the code above we were able to show that models with mass difference between tadpoles or focal tadpole mass yielded the same results as did models parameterized with either photography or spectrophotometry data. Cool beans!
+
 
 Now let's get some plotting fun, huh?
 
@@ -392,7 +650,7 @@ ggplot(bw_choice_las, aes(x = Mass, y = p_black))+
 ## ** favourite ** ##
 
 ## MEAN WAVELENGTH AND POOL CHOICE FACET BY PREDATOR
-ggplot(activity, aes( y = pr_z1, x = Predator, colour = Predator)) + 
+z1_pum<-ggplot(activity, aes( y = pr_z1, x = Predator, colour = Predator)) + 
 annotate(geom = "rect", 
              xmin = -Inf, xmax = 1.5, 
              ymin = -Inf, ymax = Inf, 
@@ -417,14 +675,17 @@ facet_wrap(~ Condition)+
                  fill = "white",
                  size = 0.8) +
 ylab("Proportion spent in zone 1") +
+xlab("Visual stimulus")+
 scale_color_brewer(palette = "Accent")+
 coord_cartesian(ylim = c(0,1)) + 
 theme(legend.position = "None")
 
+ggsave("z1_pum.png", plot = z1_pum, width = 18, height = 11, units = "cm")
+
 
 ##### Weak 3 way interaction from model op_zone1_m1_full #####
 
-ggplot(activity, aes(y = pr_z1, x = rMean_OG , color = Predator)) + #Mean_wave  
+ggplot(dat2, aes(y = pr_z1, x = m_PC1 , color = Predator)) + #Mean_wave  
 geom_point(size = 2, shape = 21, stroke = 1)+
     facet_wrap(~ Condition + Predator) +
     stat_smooth(method = "gam", 
@@ -432,7 +693,7 @@ geom_point(size = 2, shape = 21, stroke = 1)+
                 aes(fill = Predator), 
                 alpha = 0.2)+ #y ~ s(x, bs = "cs"), log(x)
     ylab("Proportion spent in Zone 1") +
-    xlab("% R-channel Reflectance") + 
+    xlab("PC1") + 
     scale_color_brewer(palette = "Accent") +
     scale_fill_brewer(palette = "Accent") +
     coord_cartesian(ylim = c(0,1)) + 
@@ -446,34 +707,27 @@ geom_point(size = 2, shape = 21, stroke = 1)+
 
 #Swimming activity FACETED BY CONDITION
 pum_swim<-
-ggplot(activity, aes( y = pr_swim, x = rMean_OG)) + #Mean_Wave
+ggplot(dat2, aes( y = pr_swim, x = m_PC1)) + #Mean_Wave
 geom_point(size = 3, shape = 21, stroke = 1, 
-           aes(fill = rMean_OG), alpha = 0.7) + #Mean_Wave
+           aes(fill = m_PC1), alpha = 0.7) + #Mean_Wave
     facet_wrap(~ Condition) +
-     stat_smooth(method = "gam", 
-               formula = y ~ x, 
-                aes(colour = Predator), 
-               alpha = 0.1, 
-               linetype = "dashed",
-               size = 0.5,
-               fill = NA)+
        stat_smooth(method = "gam", 
-               formula = y ~ poly(x,1), #log(x) 
+               formula = y ~ (x), #log(x) 
                color = "black", 
                size = 1, 
                fullrange = T)+
   ylab("Proportion of time spent swimming") +
-   xlab("% R-channel reflectance") + 
+   xlab("PC1") + 
   #expression(Nursery~mean~wavelength~Delta * tilde(nu)/cm^-1)
  scale_fill_gradient(high = "white", low = "#5c1f27", 
-                    name = "%R channel reflectance") +
+                    name = "PC1") +
   #expression(Delta * tilde(nu)/cm^-1)
 geom_richtext(data = data.frame(Condition = "White"),
-     aes(x = 42, y =0.25), color = "black", 
+     aes(x = 2, y =0.25), color = "black", 
      label = "Light nursery tadpoles swim<br>**more** in white conditions", size = 3)+
-geom_richtext(data = data.frame(Condition = "White"),
-     aes(x = 20, y = 0.03), color = "black", 
-     label = "Dark nursery tadpoles swim<br>**less** in white conditions", size = 3)+
+#geom_richtext(data = data.frame(Condition = "White"),
+     #aes(x = 20, y = 0.03), color = "black", 
+     #label = "Dark nursery tadpoles swim<br>**less** in white conditions", size = 3)+
 coord_cartesian(ylim = c(0, 1))+
 scale_color_brewer(palette = "Accent") + 
 theme(legend.text = element_text(size = 10), 
@@ -505,7 +759,71 @@ geom_point(size = 3, shape = 21, stroke = 1, alpha = 0.6,
 
 pum_mass
 
-grid.arrange(pum_swim, pum_mass, heights = c(0.60, 0.40))
+
+```
+
+# TEST for species comparison plot
+
+```{r Swim Test}
+#for pum it's PC1 * background
+#for tinc its PC1 * pred
+
+#subset(activity, !is.na(dark_light)
+
+#with medians for cutoff at m_PC1 = 0.5
+swim_pum<-
+  ggplot(dat2) +
+geom_jitter(size = 3,stroke = 1, alpha = 0.3, 
+            height = 0, width = 0.08,
+             aes(y = pr_swim, x = Predator, colour = Predator)) +
+  facet_wrap(~ dark_light) +
+    geom_point(data = data.frame(dark_light = "Turbid microhabitat"),
+             y = 0.083333333, x = 1, shape = 21,
+             fill = "white", size = 3.4, colour= "grey", stroke = 1.5)+
+  geom_point(data = data.frame(dark_light = "Turbid microhabitat"),
+             y = 0.033333333, x = 2, shape = 21,
+             fill = "white", size = 3.4, colour= "grey", stroke = 1.5)+
+   geom_point(data = data.frame(dark_light = "Turbid microhabitat"),
+             y = 0.066666667, x = 3, shape = 21,
+             fill = "white", size = 3.4, colour= "grey", stroke = 1.5)+
+    geom_point(data = data.frame(dark_light = "Turbid microhabitat"),
+             y = 0.100000000, x = 1, shape = 21,
+             fill = "black", size = 3.4, colour= "grey", stroke = 1.5)+
+  geom_point(data = data.frame(dark_light = "Turbid microhabitat"),
+             y = 0.083333333, x = 2, shape = 21,
+             fill = "black", size = 3.4, colour= "grey", stroke = 1.5)+
+   geom_point(data = data.frame(dark_light = "Turbid microhabitat"),
+             y = 0.100000000, x = 3, shape = 21,
+             fill = "black", size = 3.4, colour= "grey", stroke = 1.5)+
+  #clear
+   geom_point(data = data.frame(dark_light = "Clear microhabitat"),
+             y = 0.008333333, x = 1, shape = 21,
+             fill = "black", size = 3.4, colour= "grey", stroke = 1.5)+
+  geom_point(data = data.frame(dark_light = "Clear microhabitat"),
+             y = 0.000000000, x = 2, shape = 21,
+             fill = "black", size = 3.4, colour= "grey", stroke = 1.5)+
+   geom_point(data = data.frame(dark_light = "Clear microhabitat"),
+             y = 0.041666667, x = 3, shape = 21,
+             fill = "black", size = 3.4, colour= "grey", stroke = 1.5)+
+    geom_point(data = data.frame(dark_light = "Clear microhabitat"),
+             y = 0.091666667, x = 1, shape = 21,
+             fill = "white", size = 3.4, colour= "grey", stroke = 1.5)+
+  geom_point(data = data.frame(dark_light = "Clear microhabitat"),
+             y = 0.075000000, x = 2, shape = 21,
+             fill = "white", size = 3.4, colour= "grey", stroke = 1.5)+
+   geom_point(data = data.frame(dark_light = "Clear microhabitat"),
+             y = 0.075000000, x = 3, shape = 21,
+             fill = "white", size = 3.4, colour= "grey", stroke = 1.5)+
+  
+  ylab("Proportion spent swimming") +
+  xlab("Visual stimulus") + 
+  #scale_fill_gradient(high = "white", low = "#5c1f27", 
+                     # name = "Reflectance") +
+  scale_color_brewer(palette = "Accent") + 
+  coord_cartesian(ylim = c(0, 1)) + 
+  guides(colour = "none")
+
+ggsave("swim_pum.png", plot = swim_pum, width = 18, height = 11, units = "cm")
 
 ```
 
@@ -516,47 +834,25 @@ Alright, as you know we also have these photos that were taken the day that the 
 
 ```{r Photography and R channel}
 
-#Red channel analysis validated by Fouilloux et al. 2022 Frontiers in Biology that hypothesized about r-channel and increasingly red/turbid environments.
-
-ggplot(las, aes(x = Mean_Wave, y = rMean_OG)) + 
-  geom_point(aes(fill = Mean_Wave), shape = 21, size = 3) + 
+#using mean max transmittance and PCA 1 components
+ggplot(dat2, aes(x = Mean_Trans, y = m_PC1)) + #Mean absorbance across three technical replicates
+  geom_point(aes(fill = Mean_Trans), shape = 21, size = 3) + 
   stat_smooth(method = "gam", 
-              formula = y ~ log(x), 
-              color = "black") +
+              formula = y ~ (x), 
+              color = "black", 
+              fullrange = T) +
+   # stat_smooth(method = "gam", 
+             # formula = y ~ log(x), 
+             # color = "black", 
+              #fullrange = F) +
     #stat_smooth(method = "gam", 
               #formula = y ~ (x), 
              # color = "blue") +
-   scale_fill_gradient(low = "white", high = "#5c1f27", 
-                    name = "Mean absorbance coefficient") +
-  ylab("% R-channel reflectance ") + 
+   scale_fill_gradient(high = "white", low = "#5c1f27", 
+                    name = "Mean maximum full-spectra transmittance (T)") +
+  xlab("Mean max. transmittance")+
+  ylab("Principal component 1 (RGB)") + 
+  ylim(-2.5, 2.5)+
   theme(legend.position = "None")
 
-#it also works for the other channels
-
-
 ```
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
