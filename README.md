@@ -20,9 +20,9 @@ Hello! This is the raw data and code for the Fouilloux et al. (2023) paper explo
 
 *Trial* is the trial number (includes all permutations)
 
-*Mean_Wave* is the average spectrophotometry wavelength intensity across three samples of water collected in nurseries.
+*Mean_Abs* is the average spectrophotometry wavelength absorption across three samples of water collected in nurseries.
 
-*Range_Wave* is the range of spectrophotometry wavelength intensity within water samples of water collected in nurseries.
+*Mean_Trans* is the is the average maximum transmission value from technical replicates of spectral data.
 
 *Tad_ID* individual ID given to each tadpole
 
@@ -54,6 +54,8 @@ Hello! This is the raw data and code for the Fouilloux et al. (2023) paper explo
 
 *rMean_OG* (b, g) are the mean red, blue, or green channel percent reflectance from photographs.
 
+*R_spec*(G_,B_) are the red, green, and blue pixel counts from the PAVO package  conversion estimates of RGB colour from spectrophotometer data.
+
 ### **FG_TURB_JAN2023 is the raw data from Les Nouragues (Parare), French Guiana** ###
 
 *Tad_ID* individual ID given to each tadpole
@@ -65,6 +67,8 @@ Hello! This is the raw data and code for the Fouilloux et al. (2023) paper explo
 *Tas_Density_Cons* is the number of conspecifics in a nursery
 
 *Predator_Y_N* is the presence of a heterospecific predator in the nursery (Odonata larvae)
+
+*Depth/Length/Width* are the physical measurements of the phytotelmata in cm
 
 *Pool_ID* is the unique ID given to tadpole nursery
 
